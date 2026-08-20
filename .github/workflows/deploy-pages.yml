@@ -1,0 +1,33 @@
+# Carried into each published gh-pages tree by pages.yml (ARCH-300): with the
+# public repos' Pages set to build_type=workflow, this deploys the pushed tree
+# directly via Actions, bypassing GitHub's legacy Jekyll builder (which flaked
+# repeatedly on 2026-07-02 with opaque "Page build failed" errors while the
+# builds API reported stale statuses).
+name: Deploy Pages
+on:
+  push:
+    branches: [gh-pages]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false  # per GitHub's Pages template — never kill a deployment mid-flight
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage site tree (exclude repo internals)
+        run: |
+          mkdir -p /tmp/site
+          rsync -a --exclude .git --exclude .github ./ /tmp/site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/site
+      - id: deployment
+        uses: actions/deploy-pages@v4

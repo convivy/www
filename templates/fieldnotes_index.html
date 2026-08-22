@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Field Notes — Convivy{% endblock %}
+{% block content %}
+<h1>Field Notes</h1>
+{% if posts %}
+<ul class="post-list">
+  {% for post in posts %}
+  <li class="post-list-item">
+    <a href="{{ root }}fieldnotes/{{ post.slug }}/">{{ post.title }}</a>
+    <div class="post-meta">
+      <time datetime="{{ post.date }}">{{ post.date_display }}</time>
+      {% if post.updated %}<span class="post-updated">&middot; updated {{ post.updated_display }}</span>{% endif %}
+      <span class="byline-mark byline-{{ post.authorship }}">{{ post.authorship_label }}</span>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty-state">Field Notes is moving in — posts will appear here.</p>
+{% endif %}
+{% endblock %}

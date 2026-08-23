@@ -8,7 +8,7 @@
       <time datetime="{{ post.date }}">{{ post.date_display }}</time>
       {% if post.updated %}<span class="post-updated">&middot; updated {{ post.updated_display }}</span>{% endif %}
       {% if post.author %}<span class="post-author">&middot; {{ post.author }}</span>{% endif %}
-      <span class="byline-mark byline-{{ post.authorship }}">{{ post.authorship_label }}</span>
+      <span class="byline-mark authorship-{{ post.authorship }}">{{ post.authorship_label }}</span>
     </div>
   </header>
   {{ post.body_html | safe }}

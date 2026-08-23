@@ -1,18 +1,26 @@
 /* Convivy — text-first, no frameworks, no JS. */
 
 :root {
-  /* placeholder pending brand hex transcription — brand is warm-green with a yellow accent */
-  --color-bg: #faf7f0;
-  --color-bg-alt: #f2ede0;
-  --color-text: #23261f;
-  --color-text-muted: #5c6156;
-  --color-accent: #3d6b4a;
-  --color-accent-hover: #2c4f37;
-  --color-accent-2: #c9a227;
-  --color-border: #ddd6c4;
+  /* Colors transcribed from previous convivy.com index.html (inline <style>,
+     commit 29b6a4e — the tree of main before PR #1 merged the site-source
+     scaffold). --color-bg-alt has no direct source there (the old single-page
+     site had no code/badge surfaces); it's a light tint between --color-bg
+     and --color-border, kept close to the source palette. */
+  --color-bg: #faf8f2;         /* was --bg on the previous site */
+  --color-bg-alt: #f1ece0;     /* derived tint, not in the old palette */
+  --color-text: #1f2a24;       /* was --ink */
+  --color-text-muted: #5a6660; /* was --muted */
+  --color-accent: #2f6b4f;     /* was --green */
+  --color-accent-hover: #234f3a; /* was --green-deep */
+  --color-accent-2: #c9892a;   /* was --gold */
+  --color-border: #e5e0d2;     /* was --rule */
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  /* Fonts from the previous convivy.com index.html: Outfit for display/
+     headings, Inter for body text, loaded from Google Fonts there too. */
+  --font-heading: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   --measure: 65ch;
 }
 
@@ -29,7 +37,7 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
-  font-size: 1.125rem;
+  font-size: 1.0625rem; /* 17px, matching previous convivy.com body copy */
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
@@ -61,13 +69,25 @@ main {
 }
 
 .site-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-heading);
   font-weight: 700;
   font-size: 1.25rem;
+  letter-spacing: -0.015em;
   text-decoration: none;
   color: var(--color-text);
 }
 
+.site-logo {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+
 .site-nav a {
+  font-family: var(--font-heading);
   text-decoration: none;
   color: var(--color-text-muted);
   font-size: 1rem;
@@ -83,13 +103,17 @@ main {
 }
 
 h1, h2, h3 {
+  font-family: var(--font-heading);
   line-height: 1.25;
   font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2.4rem;
+  line-height: 1.15;
   margin: 0 0 1.5rem;
+  color: var(--color-accent);
 }
 
 h2 {

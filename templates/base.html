@@ -5,11 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Convivy{% endblock %}</title>
   <meta name="description" content="{% block description %}Convivy is an agentic software engineering lab operated by Jay Porter.{% endblock %}">
+  <link rel="icon" type="image/png" href="{{ root }}static/sunrise-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ root }}static/style.css">
 </head>
 <body>
   <header class="site-header">
-    <a class="site-title" href="{{ root }}">Convivy</a>
+    <a class="site-title" href="{{ root }}">
+      <img class="site-logo" src="{{ root }}static/sunrise-logo.png" alt="" width="36" height="36">
+      Convivy
+    </a>
     <nav class="site-nav">
       <a href="{{ root }}fieldnotes/">Field Notes</a>
     </nav>

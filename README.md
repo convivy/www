@@ -111,17 +111,15 @@ requirements.txt           markdown, jinja2, requests — pinned, nothing else
 
 ### Previewing a PR
 
-Every PR against `main` builds the site (no deploy, no Orient secrets needed) and uploads the
-result as an artifact. To view it: open the PR's checks, find the `preview` job, and download the
-`site-preview` artifact. Unzip it, then **serve the folder rather than double-clicking
-`index.html`** — the site's links are root-relative, so opening the file directly (a `file://`
-URL) breaks `/fieldnotes/` links. From the unzipped directory:
+Every PR against `main` builds the site (no deploy, no Orient secrets needed) and pushes the
+result to a live URL: **https://preview.convivy.com**. Open the PR, wait for the `preview` job to
+finish, then click the preview link from its comment on the PR.
 
-```
-python3 -m http.server
-```
+This is one shared preview, not one per PR — whichever PR's `preview` job finishes last is what's
+live. If you're looking at someone else's build, wait for yours to finish and refresh.
 
-then open `http://localhost:8000/` in a browser.
+Since the build runs with no Orient secrets, the preview always renders the empty-state Field
+Notes index — there's no corpus behind it.
 
 Run it locally with:
 

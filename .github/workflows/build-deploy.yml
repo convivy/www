@@ -68,6 +68,13 @@ jobs:
   preview:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # Scoped down from the workflow-level block (job permissions replace,
+    # not merge, the top-level ones): this job doesn't deploy via
+    # actions/deploy-pages, so it drops pages/id-token, and it needs
+    # pull-requests: write to post the preview-URL comment below.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -91,3 +98,82 @@ jobs:
           name: site-preview
           path: _site/
           retention-days: 7
+
+      - name: Check for preview deploy token
+        id: check_token
+        # A fork PR runs with no secrets, so PREVIEW_DEPLOY_TOKEN is empty
+        # for it — that's expected, not an error. Same thing applies before
+        # Jay has minted and added the token at all. Either way: skip the
+        # live deploy and comment steps below, log why, and let the job
+        # succeed (the artifact upload above already ran as a fallback).
+        env:
+          HAS_TOKEN: ${{ secrets.PREVIEW_DEPLOY_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" = "true" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "PREVIEW_DEPLOY_TOKEN is not set — skipping live preview deploy (expected for fork PRs, and until Jay adds the secret)."
+          fi
+
+      - name: Deploy to www-preview (gh-pages)
+        if: steps.check_token.outputs.has_token == 'true'
+        env:
+          PREVIEW_DEPLOY_TOKEN: ${{ secrets.PREVIEW_DEPLOY_TOKEN }}
+        # Force-push _site/ as a fresh commit onto www-preview's gh-pages
+        # branch — last PR to build wins, there's no per-PR history to
+        # preserve. The CNAME file doesn't survive the build, so it's
+        # re-written here before the push. The token goes in an auth
+        # header (never the URL, never echoed) so it can't leak into
+        # `git remote -v`, .git/config, or a process listing.
+        run: |
+          echo "preview.convivy.com" > _site/CNAME
+          cd _site
+          git init -q -b gh-pages
+          git config user.name "convivy-www-preview-bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -q -m "preview: convivy/www PR #${{ github.event.pull_request.number }} @ ${{ github.event.pull_request.head.sha }}"
+          git remote add origin https://github.com/convivy/www-preview.git
+          git -c http.extraheader="AUTHORIZATION: bearer ${PREVIEW_DEPLOY_TOKEN}" \
+            push --force origin gh-pages:gh-pages
+
+      - name: Comment preview URL on PR
+        if: steps.check_token.outputs.has_token == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- www-preview-url-comment -->';
+            const prNumber = context.issue.number;
+            const sha = context.payload.pull_request.head.sha;
+            const body = [
+              marker,
+              '**Live preview:** https://preview.convivy.com',
+              '',
+              `Built from PR #${prNumber} @ \`${sha.substring(0, 7)}\`.`,
+              '',
+              '_This is one shared preview, not one per PR — whichever PR builds last is what you see. If it looks stale, check whether a newer PR build has landed since._',
+            ].join('\n');
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.data.find((c) => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }

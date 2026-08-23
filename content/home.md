@@ -4,7 +4,7 @@ Convivy is an agentic software engineering lab operated by Jay Porter.
 
 In the process of creating one product, I (Jay) ended up building an extensive agentic development platform. Using that platform to develop software has become a bit of a flywheel: the agentic engineering system helps us build the software, and building the software helps us build a better agentic engineering system.
 
-## Field Notes
+## [Field Notes](/fieldnotes/)
 
 Also, I have a blog. (It's 2006 somewhere!)
 
@@ -12,7 +12,7 @@ Agentic software engineering is still nascent. The sense of exploration and the 
 
 Along the way, I've encountered a lot of other technical professionals looking for an entry point into understanding how our work is changing.
 
-I write Field Notes to share what I'm seeing in that respect, with the hope that my peers in the industry — and builders and soon-to-be builders in other industries — may find it helpful.
+I write [Field Notes](/fieldnotes/) to share what I'm seeing in that respect, with the hope that my peers in the industry — and builders and soon-to-be builders in other industries — may find it helpful.
 
 ## Background
 

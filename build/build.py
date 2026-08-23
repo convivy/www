@@ -149,6 +149,50 @@ AUTHORSHIP_LABELS = {"human": "Human", "collab": "Collab", "llm": "LLM"}
 
 _HEADING_TAG_RE = re.compile(r"(</?h)([1-6])\b", flags=re.IGNORECASE)
 
+_ATX_HEADING_RE = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*(?:\n|$)")
+_SETEXT_UNDERLINE_RE = re.compile(r"^ {0,3}(?:=+|-+) *$")
+
+
+def _normalize_heading_text(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip().casefold()
+
+
+def strip_leading_title_heading(body: str, title: str) -> str:
+    """Strip the post body's leading heading if its text matches `title`.
+
+    Orient's corpus bodies commonly begin with the post title restated as a
+    heading (the templates already render the title from the `title` field,
+    so left alone this duplicates it). Strips that leading heading, in
+    either ATX (`# Title`) or setext (`Title` underlined with `===`/`---`)
+    form, comparing case-insensitively and whitespace-normalized, and
+    tolerating leading blank lines before the heading.
+
+    Leaves `body` byte-for-byte untouched if the leading heading's text
+    doesn't match `title`, or if the body has no leading heading at all —
+    this never strips content that isn't the duplicated title.
+    """
+    normalized_title = _normalize_heading_text(title)
+    if not normalized_title:
+        return body
+
+    leading_stripped = body.lstrip("\n\r\t ")
+
+    atx_match = _ATX_HEADING_RE.match(leading_stripped)
+    if atx_match:
+        if _normalize_heading_text(atx_match.group(2)) == normalized_title:
+            return leading_stripped[atx_match.end():].lstrip("\n")
+        return body
+
+    first_line, sep, remainder = leading_stripped.partition("\n")
+    if sep and first_line.strip():
+        second_line, sep2, rest = remainder.partition("\n")
+        if _SETEXT_UNDERLINE_RE.match(second_line):
+            if _normalize_heading_text(first_line) == normalized_title:
+                return rest.lstrip("\n") if sep2 else ""
+        return body
+
+    return body
+
 
 def shift_headings(html: str, by: int = 1) -> str:
     """Demote every <h1>–<h6> in `html` by `by` levels, capping at <h6>.
@@ -165,7 +209,8 @@ def shift_headings(html: str, by: int = 1) -> str:
 
 def prepare_post(post: dict) -> dict:
     authorship = post["authorship"]
-    body_html = render_markdown(post["body"])
+    body = strip_leading_title_heading(post["body"], post["title"])
+    body_html = render_markdown(body)
     return {
         **post,
         "date_display": display_date(post["date"]),

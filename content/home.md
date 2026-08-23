@@ -28,4 +28,4 @@ It soon became clear that the challenges and opportunities of agentic engineerin
 
 Convivy's product portfolio reflects this breadth of approach, with a B2B SaaS, mobile apps, an industry-specific management platform, and the agentic engineering system itself.
 
-These will start rolling out to the public soon, each with their own identity and website. For now, I hope you enjoy following along on the blog.
+These will start rolling out to the public soon, each with their own identity and website. For now, I hope you enjoy following along on [the blog](/fieldnotes/).

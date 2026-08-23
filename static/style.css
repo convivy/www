@@ -303,9 +303,10 @@ p {
   margin-bottom: 0;
 }
 
-/* The index: a compact table of contents for the whole stream. Entries
+/* The index: a compact table of contents for the river below. Entries
    jump to the full post inline on this page; the river titles below carry
-   the permalinks. */
+   the permalinks. Capped with the river, so it never grows past a handful
+   of rows — the archive at the foot of the page indexes the rest. */
 
 .post-index {
   margin-bottom: 4rem;
@@ -367,7 +368,21 @@ p {
   white-space: nowrap;
 }
 
-/* The river: every post in full, newest first. */
+.post-index-more {
+  margin: 0.85rem 0.25rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+}
+
+.post-index-more a {
+  text-decoration: none;
+}
+
+.post-index-more a:hover {
+  text-decoration: underline;
+}
+
+/* The river: the newest posts in full, newest first (build.py's RIVER_CAP). */
 
 .river-post {
   /* Breathing room when an index anchor jumps here. */
@@ -439,6 +454,83 @@ p {
   letter-spacing: -0.01em;
   color: var(--color-text);
   margin: 1.9rem 0 0.6rem;
+}
+
+/* The archive: every post beyond the river, grouped by year, linking to
+   permalink pages. Deliberately tighter than the top index — this list is
+   the part that grows without bound, and it sits after the reading
+   content, where a long scannable list is what a reader wants. */
+
+.post-archive {
+  margin-top: 5rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.post-archive-label {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  scroll-margin-top: 1.5rem;
+}
+
+.post-archive-year {
+  margin: 1.9rem 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* The gold dawn-tick marks each year, echoing the river-post tick. */
+.post-archive-year::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-accent-2);
+  margin-bottom: 0.6rem;
+}
+
+.post-archive ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.post-archive a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.15rem 1rem;
+  padding: 0.38rem 0.25rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-archive-title {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: var(--color-text);
+  transition: color 120ms ease;
+}
+
+.post-archive a:hover .post-archive-title {
+  color: var(--color-accent);
+}
+
+.post-archive-meta {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 /* ---------- Meta & authorship marks ---------- */

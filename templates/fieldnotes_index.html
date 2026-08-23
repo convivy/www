@@ -8,9 +8,9 @@
 </header>
 {% if posts %}
 <nav class="post-index" aria-labelledby="post-index-label">
-  <h2 class="post-index-label" id="post-index-label">All posts</h2>
+  <h2 class="post-index-label" id="post-index-label">{% if older_count %}Latest{% else %}All posts{% endif %}</h2>
   <ul>
-    {% for post in posts %}
+    {% for post in river_posts %}
     <li>
       <a href="#{{ post.slug }}">
         <span class="post-index-title">{{ post.title }}</span>
@@ -22,9 +22,14 @@
     </li>
     {% endfor %}
   </ul>
+  {% if older_count %}
+  <p class="post-index-more">
+    <a href="#older-posts">Plus {{ older_count }} older post{{ 's' if older_count != 1 }} &darr;</a>
+  </p>
+  {% endif %}
 </nav>
 <div class="river">
-  {% for post in posts %}
+  {% for post in river_posts %}
   <article class="river-post" id="{{ post.slug }}" aria-labelledby="river-title-{{ post.slug }}">
     <header class="river-post-header">
       <h2 class="river-post-title" id="river-title-{{ post.slug }}">
@@ -44,6 +49,27 @@
   </article>
   {% endfor %}
 </div>
+{% if older_by_year %}
+<nav class="post-archive" aria-labelledby="older-posts">
+  <h2 class="post-archive-label" id="older-posts">Older posts</h2>
+  {% for group_year, group_posts in older_by_year %}
+  <h3 class="post-archive-year">{{ group_year }}</h3>
+  <ul>
+    {% for post in group_posts %}
+    <li>
+      <a href="{{ root }}fieldnotes/{{ post.slug }}/">
+        <span class="post-archive-title">{{ post.title }}</span>
+        <span class="post-archive-meta">
+          <time datetime="{{ post.date }}">{{ post.date_short }}</time>
+          <span class="byline-mark authorship-{{ post.authorship }}">{{ post.authorship_label }}</span>
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+</nav>
+{% endif %}
 {% else %}
 <div class="empty-state">
   <p>Field Notes is moving in &mdash; posts will appear here.</p>

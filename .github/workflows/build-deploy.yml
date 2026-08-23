@@ -1,0 +1,61 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [fieldnotes-publish]
+  workflow_dispatch: {}
+  schedule:
+    # Daily fallback so a missed repository_dispatch (or a stale corpus
+    # cache upstream) still catches up within a day.
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false  # per GitHub's Pages template — never kill a deployment mid-flight
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build site
+        env:
+          # Unset ORIENT_FIELDNOTES_URL builds an empty-state Field Notes
+          # index; a set-but-broken corpus fails this step on purpose.
+          # Referencing an unconfigured variable/secret below evaluates to
+          # an empty string rather than failing the expression, so this
+          # step is safe to run before Jay wires the runbook tokens up —
+          # it just builds the empty state until then.
+          ORIENT_FIELDNOTES_URL: ${{ vars.ORIENT_FIELDNOTES_URL }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: python build/build.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

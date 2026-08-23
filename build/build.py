@@ -51,6 +51,12 @@ OUT_DIR = ROOT / "_site"
 
 MD = markdown.Markdown(extensions=["extra", "smarty"])
 
+# How many of the newest posts the Field Notes front page renders in full
+# (the river). Posts beyond the cap appear in the year-grouped "Older posts"
+# archive list below the river, linking to their permalink pages, so the
+# front page stays a readable length however large the corpus grows.
+RIVER_CAP = 5
+
 
 class CorpusError(RuntimeError):
     """Raised when ORIENT_FIELDNOTES_URL is set but the corpus can't be used."""
@@ -145,6 +151,16 @@ def display_date(iso_date: str) -> str:
     return d.strftime("%B %-d, %Y") if os.name != "nt" else d.strftime("%B %d, %Y")
 
 
+def short_date(iso_date: str) -> str:
+    """Render an ISO 8601 date/datetime as a month-and-day date ("Aug 4").
+
+    Used in the archive list, where rows sit under a year heading and
+    repeating the year on every row would be noise.
+    """
+    d = datetime.date.fromisoformat(iso_date[:10])
+    return d.strftime("%b %-d") if os.name != "nt" else d.strftime("%b %d")
+
+
 AUTHORSHIP_LABELS = {"human": "Human", "collab": "Collab", "llm": "LLM"}
 
 _HEADING_TAG_RE = re.compile(r"(</?h)([1-6])\b", flags=re.IGNORECASE)
@@ -214,6 +230,8 @@ def prepare_post(post: dict) -> dict:
     return {
         **post,
         "date_display": display_date(post["date"]),
+        "date_short": short_date(post["date"]),
+        "year": post["date"][:4],
         "updated_display": display_date(post["updated"]) if post.get("updated") else None,
         "authorship_label": AUTHORSHIP_LABELS.get(authorship, authorship),
         "body_html": body_html,
@@ -260,6 +278,20 @@ def load_corpus() -> list[dict]:
     return [prepare_post(p) for p in posts]
 
 
+def group_by_year(posts: list[dict]) -> list[tuple[str, list[dict]]]:
+    """Group already-sorted (newest-first) posts into (year, posts) runs.
+
+    Preserves the incoming order both across and within groups, so the
+    archive lists years newest-first and posts newest-first inside each.
+    """
+    groups: list[tuple[str, list[dict]]] = []
+    for post in posts:
+        if not groups or groups[-1][0] != post["year"]:
+            groups.append((post["year"], []))
+        groups[-1][1].append(post)
+    return groups
+
+
 def build() -> None:
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
@@ -285,9 +317,18 @@ def build() -> None:
     fieldnotes_dir = OUT_DIR / "fieldnotes"
     fieldnotes_dir.mkdir(parents=True)
 
+    river_posts = posts[:RIVER_CAP]
+    older_posts = posts[RIVER_CAP:]
     index_tmpl = env.get_template("fieldnotes_index.html")
     (fieldnotes_dir / "index.html").write_text(
-        index_tmpl.render(root="/", year=year, posts=posts),
+        index_tmpl.render(
+            root="/",
+            year=year,
+            posts=posts,
+            river_posts=river_posts,
+            older_by_year=group_by_year(older_posts),
+            older_count=len(older_posts),
+        ),
         encoding="utf-8",
     )
 

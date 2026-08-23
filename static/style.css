@@ -1,27 +1,28 @@
-/* Convivy — text-first, no frameworks, no JS. */
+/* Convivy — text-first, no frameworks, no JS.
+   Warm editorial register: cream ground, deep green ink, gold dawn accents.
+   Headings in Outfit, long-form prose in Newsreader, UI meta in Inter. */
 
 :root {
-  /* Colors transcribed from previous convivy.com index.html (inline <style>,
-     commit 29b6a4e — the tree of main before PR #1 merged the site-source
-     scaffold). --color-bg-alt has no direct source there (the old single-page
-     site had no code/badge surfaces); it's a light tint between --color-bg
-     and --color-border, kept close to the source palette. */
-  --color-bg: #faf8f2;         /* was --bg on the previous site */
-  --color-bg-alt: #f1ece0;     /* derived tint, not in the old palette */
-  --color-text: #1f2a24;       /* was --ink */
-  --color-text-muted: #5a6660; /* was --muted */
-  --color-accent: #2f6b4f;     /* was --green */
-  --color-accent-hover: #234f3a; /* was --green-deep */
-  --color-accent-2: #c9892a;   /* was --gold */
-  --color-border: #e5e0d2;     /* was --rule */
+  /* Brand palette (carried from the original convivy.com inline styles). */
+  --color-bg: #faf8f2;           /* cream ground */
+  --color-bg-alt: #f1ece0;       /* light tint for code/badge surfaces */
+  --color-text: #1f2a24;         /* near-black green ink */
+  --color-text-muted: #5a6660;
+  --color-accent: #2f6b4f;       /* green */
+  --color-accent-hover: #234f3a; /* deep green */
+  --color-accent-2: #c9892a;     /* gold — decorative use */
+  --color-accent-2-text: #8a5a14;/* darkened gold for text-size uses (AA on cream) */
+  --color-border: #e5e0d2;
+  --color-footer: #22382c;       /* footer band: deep brand green */
+  --color-footer-text: #e9e5d8;
+  --color-footer-muted: #a9b5aa;
 
-  /* Fonts from the previous convivy.com index.html: Outfit for display/
-     headings, Inter for body text, loaded from Google Fonts there too. */
   --font-heading: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  --font-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  --measure: 65ch;
+  --measure: 66ch;
 }
 
 * {
@@ -34,95 +35,272 @@ html {
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* A faint dawn glow at the top of the page — warm gold light on cream. */
+  background:
+    radial-gradient(120% 24rem at 50% -6rem, rgba(201, 137, 42, 0.09), rgba(201, 137, 42, 0) 70%),
+    var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
-  font-size: 1.0625rem; /* 17px, matching previous convivy.com body copy */
+  font-size: 1.0625rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
 }
 
 a {
   color: var(--color-accent);
   text-decoration: underline;
-  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  transition: color 120ms ease, text-decoration-color 120ms ease;
 }
 
 a:hover {
   color: var(--color-accent-hover);
+  text-decoration-color: currentColor;
 }
 
-.site-header,
-.site-footer,
-main {
-  max-width: var(--measure);
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem;
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 10;
+  padding: 0.5rem 0.9rem;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border-radius: 0 0 6px 6px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+
+.skip-link:focus-visible {
+  top: 0;
+  color: var(--color-bg);
+  outline-offset: 0;
+}
+
+/* ---------- Header ---------- */
 
 .site-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-border);
 }
 
-.site-title {
+.site-header-inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 1.25rem;
+  font-weight: 600;
+  font-size: 1.3rem;
   letter-spacing: -0.015em;
   text-decoration: none;
   color: var(--color-text);
 }
 
+.site-title:hover {
+  color: var(--color-accent);
+}
+
 .site-logo {
   display: block;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgba(31, 42, 36, 0.18);
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.4rem;
 }
 
 .site-nav a {
   font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 1rem;
   text-decoration: none;
   color: var(--color-text-muted);
-  font-size: 1rem;
+  padding: 0.2rem 0;
+  border-bottom: 2px solid transparent;
+  transition: color 120ms ease, border-color 120ms ease;
 }
 
 .site-nav a:hover {
   color: var(--color-accent);
+  border-bottom-color: var(--color-accent-2);
 }
 
+/* ---------- Main column ---------- */
+
 main {
-  padding-top: 3rem;
-  padding-bottom: 4rem;
+  flex: 1;
+  width: 100%;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 5rem;
 }
+
+/* ---------- Headings ---------- */
 
 h1, h2, h3 {
   font-family: var(--font-heading);
-  line-height: 1.25;
+  line-height: 1.2;
   font-weight: 700;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
 }
 
 h1 {
-  font-size: 2.4rem;
-  line-height: 1.15;
+  font-size: clamp(2.3rem, 6vw, 3.1rem);
+  line-height: 1.1;
   margin: 0 0 1.5rem;
-  color: var(--color-accent);
 }
 
 h2 {
-  font-size: 1.4rem;
-  margin: 2.5rem 0 1rem;
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin: 3rem 0 1rem;
+}
+
+h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 2.25rem 0 0.75rem;
+}
+
+/* A short gold dawn-tick above section headings. */
+.prose h2::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-accent-2);
+  margin-bottom: 0.85rem;
+}
+
+/* Section headings that are links (e.g. “## [Field Notes](/fieldnotes/)”)
+   keep heading ink and reveal green + underline on hover. */
+h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h2 a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--color-accent-2);
+  text-underline-offset: 0.2em;
+}
+
+.kicker {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.kicker a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.kicker a:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-2);
+  text-underline-offset: 0.25em;
+}
+
+/* ---------- Long-form prose ---------- */
+
+.prose {
+  font-family: var(--font-serif);
+  font-size: 1.175rem;
+  line-height: 1.72;
+}
+
+.prose p {
+  margin: 0 0 1.3rem;
+}
+
+/* The opening line reads as a standfirst. */
+.home > h1 + p {
+  font-size: 1.45rem;
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--color-accent-hover);
+  margin-bottom: 1.6rem;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose ul, .prose ol {
+  margin: 0 0 1.3rem;
+  padding-left: 1.4rem;
+}
+
+.prose li {
+  margin-bottom: 0.4rem;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.prose hr {
+  border: 0;
+  height: 1px;
+  background: var(--color-border);
+  margin: 2.5rem 0;
 }
 
 p {
   margin: 0 0 1.25rem;
+}
+
+/* ---------- Field Notes index ---------- */
+
+.page-header {
+  margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+  margin-bottom: 0;
 }
 
 .post-list {
@@ -132,74 +310,124 @@ p {
 }
 
 .post-list-item {
-  padding: 1.25rem 0;
   border-bottom: 1px solid var(--color-border);
 }
 
-.post-list-item a {
-  font-size: 1.2rem;
-  font-weight: 600;
-  text-decoration: none;
+.post-list-item:first-child {
+  border-top: 1px solid var(--color-border);
 }
 
-.post-list-item a:hover {
-  text-decoration: underline;
+.post-list-link {
+  display: block;
+  padding: 1.35rem 0.25rem;
+  text-decoration: none;
+  color: inherit;
 }
+
+.post-list-title {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--color-text);
+  transition: color 120ms ease;
+}
+
+.post-list-link:hover .post-list-title {
+  color: var(--color-accent);
+}
+
+.post-list-link .post-meta {
+  margin-top: 0.45rem;
+}
+
+/* ---------- Meta & authorship marks ---------- */
 
 .post-meta {
-  margin-top: 0.35rem;
-  font-size: 0.9rem;
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
 .byline-mark {
   display: inline-block;
-  margin-left: 0.35rem;
-  padding: 0.05rem 0.5rem;
+  margin-left: 0.45rem;
+  padding: 0.1rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: var(--color-bg-alt);
-  border: 1px solid var(--color-border);
+  letter-spacing: 0.06em;
+  vertical-align: 0.08em;
 }
 
 .authorship-human {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+  background: rgba(47, 107, 79, 0.1);
+  border: 1px solid rgba(47, 107, 79, 0.35);
 }
 
 .authorship-collab {
-  color: var(--color-accent-2);
-  border-color: var(--color-accent-2);
+  color: var(--color-accent-2-text);
+  background: rgba(201, 137, 42, 0.12);
+  border: 1px solid rgba(201, 137, 42, 0.45);
 }
 
 .authorship-llm {
   color: var(--color-text-muted);
-  border-color: var(--color-text-muted);
+  background: rgba(90, 102, 96, 0.1);
+  border: 1px solid rgba(90, 102, 96, 0.35);
 }
 
 .empty-state {
-  color: var(--color-text-muted);
-  font-style: italic;
+  margin-top: 3rem;
+  padding: 2.75rem 1.5rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  text-align: center;
 }
 
+.empty-state p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Post page ---------- */
+
 .post-header {
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.post-header h1 {
+  margin-bottom: 0.75rem;
 }
 
 .post-back {
-  margin-top: 3rem;
+  margin-top: 3.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--color-border);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
 }
 
-.site-footer {
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
+.post-back a {
+  text-decoration: none;
 }
+
+.post-back a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Code & quotes ---------- */
 
 code, pre {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -207,25 +435,163 @@ code, pre {
 }
 
 code {
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
-  font-size: 0.9em;
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  font-size: 0.82em;
 }
 
 pre {
-  padding: 1rem;
-  border-radius: 6px;
+  padding: 1.1rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
   overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.86rem;
 }
 
 pre code {
   padding: 0;
   background: none;
+  font-size: inherit;
 }
 
 blockquote {
-  margin: 1.5rem 0;
-  padding-left: 1.25rem;
-  border-left: 3px solid var(--color-accent);
+  margin: 1.75rem 0;
+  padding: 0.15rem 0 0.15rem 1.35rem;
+  border-left: 3px solid var(--color-accent-2);
   color: var(--color-text-muted);
+  font-style: italic;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 1.3rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+}
+
+th, td {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+th {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  background: var(--color-bg-alt);
+}
+
+/* ---------- Horizon & footer ---------- */
+
+.horizon {
+  line-height: 0;
+  margin-top: auto;
+}
+
+.horizon svg {
+  display: block;
+  width: 100%;
+  height: clamp(44px, 7vw, 80px);
+}
+
+.site-footer {
+  background: var(--color-footer);
+  color: var(--color-footer-text);
+}
+
+.site-footer-inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2.25rem 1.5rem 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 2rem;
+}
+
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--color-footer-text);
+  text-decoration: none;
+}
+
+.footer-brand img {
+  display: block;
+  border-radius: 6px;
+}
+
+.footer-brand:hover {
+  color: #fff;
+}
+
+.footer-nav {
+  display: flex;
+  gap: 1.4rem;
+}
+
+.footer-nav a {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-footer-muted);
+  text-decoration: none;
+}
+
+.footer-nav a:hover {
+  color: var(--color-footer-text);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.footer-copy {
+  margin: 0 0 0 auto;
+  font-size: 0.85rem;
+  color: var(--color-footer-muted);
+}
+
+.site-footer :focus-visible {
+  outline-color: var(--color-accent-2);
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 540px) {
+  main {
+    padding-top: 2.5rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .site-header-inner {
+    padding: 1.1rem 1.25rem;
+  }
+
+  .prose {
+    font-size: 1.1rem;
+  }
+
+  .home > h1 + p {
+    font-size: 1.3rem;
+  }
+
+  .footer-copy {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}
+
+/* ---------- Motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+  }
 }

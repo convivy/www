@@ -3,6 +3,7 @@
 {% block content %}
 <article class="post">
   <header class="post-header">
+    <p class="kicker"><a href="{{ root }}fieldnotes/">Field Notes</a></p>
     <h1>{{ post.title }}</h1>
     <div class="post-meta">
       <time datetime="{{ post.date }}">{{ post.date_display }}</time>
@@ -11,7 +12,9 @@
       <span class="byline-mark authorship-{{ post.authorship }}">{{ post.authorship_label }}</span>
     </div>
   </header>
-  {{ post.body_html | safe }}
+  <div class="prose">
+    {{ post.body_html | safe }}
+  </div>
   <p class="post-back"><a href="{{ root }}fieldnotes/">&larr; All Field Notes</a></p>
 </article>
 {% endblock %}

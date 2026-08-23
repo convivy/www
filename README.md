@@ -69,7 +69,10 @@ return a JSON object of this shape:
   small byline mark (Human / Collab / LLM) next to the date. Any other value fails the build (see
   below) rather than rendering silently wrong.
 - `body` is the post's markdown source. (Not `body_markdown` — Orient's deployed response uses the
-  shorter field name.)
+  shorter field name.) Bodies may begin with the title restated as a heading (as in the example
+  above); the build strips a leading heading from `body` when its text matches `title`, so the
+  templates' own title rendering (`<h1>`/`<h2>`) is never duplicated. A leading heading whose text
+  doesn't match `title` is left in place.
 - `count`, when present, must equal `len(posts)`. A mismatch fails the build — this is the guard
   against a response silently truncated somewhere upstream.
 - `slug` becomes the URL: `/fieldnotes/<slug>/`.

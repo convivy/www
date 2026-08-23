@@ -293,7 +293,7 @@ p {
   margin: 0 0 1.25rem;
 }
 
-/* ---------- Field Notes index ---------- */
+/* ---------- Field Notes front page: index + river ---------- */
 
 .page-header {
   margin-bottom: 2.5rem;
@@ -303,44 +303,142 @@ p {
   margin-bottom: 0;
 }
 
-.post-list {
+/* The index: a compact table of contents for the whole stream. Entries
+   jump to the full post inline on this page; the river titles below carry
+   the permalinks. */
+
+.post-index {
+  margin-bottom: 4rem;
+}
+
+.post-index-label {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.post-index ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.post-list-item {
+.post-index li {
   border-bottom: 1px solid var(--color-border);
 }
 
-.post-list-item:first-child {
+.post-index li:first-child {
   border-top: 1px solid var(--color-border);
 }
 
-.post-list-link {
-  display: block;
-  padding: 1.35rem 0.25rem;
+.post-index a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.65rem 0.25rem;
   text-decoration: none;
   color: inherit;
 }
 
-.post-list-title {
-  display: block;
+.post-index-title {
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 1.25rem;
+  font-size: 1.02rem;
   letter-spacing: -0.01em;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--color-text);
   transition: color 120ms ease;
 }
 
-.post-list-link:hover .post-list-title {
+.post-index a:hover .post-index-title {
   color: var(--color-accent);
 }
 
-.post-list-link .post-meta {
-  margin-top: 0.45rem;
+.post-index-meta {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* The river: every post in full, newest first. */
+
+.river-post {
+  /* Breathing room when an index anchor jumps here. */
+  scroll-margin-top: 1.5rem;
+}
+
+.river-post + .river-post {
+  margin-top: 4rem;
+  padding-top: 3.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.river-post-header {
+  margin-bottom: 1.75rem;
+}
+
+.river-post-title {
+  font-size: clamp(1.6rem, 4vw, 1.9rem);
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+}
+
+/* A gold dawn-tick marks each post's start, echoing the prose h2 tick. */
+.river-post-title::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-accent-2);
+  margin-bottom: 0.85rem;
+}
+
+/* Body headings in the river are demoted one level (h2 -> h3, ...) so the
+   document outline stays valid under the post's h2 title; these rules keep
+   their visual size identical to the permalink page. */
+
+.river .prose h3 {
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin: 3rem 0 1rem;
+}
+
+.river .prose h3::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-accent-2);
+  margin-bottom: 0.85rem;
+}
+
+.river .prose h4 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin: 2.25rem 0 0.75rem;
+}
+
+.river .prose h5 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  margin: 1.9rem 0 0.6rem;
 }
 
 /* ---------- Meta & authorship marks ---------- */

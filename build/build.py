@@ -34,6 +34,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -146,15 +147,34 @@ def display_date(iso_date: str) -> str:
 
 AUTHORSHIP_LABELS = {"human": "Human", "collab": "Collab", "llm": "LLM"}
 
+_HEADING_TAG_RE = re.compile(r"(</?h)([1-6])\b", flags=re.IGNORECASE)
+
+
+def shift_headings(html: str, by: int = 1) -> str:
+    """Demote every <h1>–<h6> in `html` by `by` levels, capping at <h6>.
+
+    The Field Notes front page renders full post bodies inline under the
+    page's single <h1> and each post's <h2> title, so body headings
+    (authored as h2/h3 in markdown for the permalink page, where the title
+    is the h1) must drop one level to keep the document outline valid.
+    """
+    return _HEADING_TAG_RE.sub(
+        lambda m: f"{m.group(1)}{min(int(m.group(2)) + by, 6)}", html
+    )
+
 
 def prepare_post(post: dict) -> dict:
     authorship = post["authorship"]
+    body_html = render_markdown(post["body"])
     return {
         **post,
         "date_display": display_date(post["date"]),
         "updated_display": display_date(post["updated"]) if post.get("updated") else None,
         "authorship_label": AUTHORSHIP_LABELS.get(authorship, authorship),
-        "body_html": render_markdown(post["body"]),
+        "body_html": body_html,
+        # The same body, demoted one heading level, for inline rendering on
+        # the Field Notes front page (the river).
+        "body_html_river": shift_headings(body_html),
     }
 
 

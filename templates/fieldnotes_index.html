@@ -7,20 +7,43 @@
   <h1>Field Notes</h1>
 </header>
 {% if posts %}
-<ul class="post-list">
+<nav class="post-index" aria-labelledby="post-index-label">
+  <h2 class="post-index-label" id="post-index-label">All posts</h2>
+  <ul>
+    {% for post in posts %}
+    <li>
+      <a href="#{{ post.slug }}">
+        <span class="post-index-title">{{ post.title }}</span>
+        <span class="post-index-meta">
+          <time datetime="{{ post.date }}">{{ post.date_display }}</time>
+          <span class="byline-mark authorship-{{ post.authorship }}">{{ post.authorship_label }}</span>
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+<div class="river">
   {% for post in posts %}
-  <li class="post-list-item">
-    <a class="post-list-link" href="{{ root }}fieldnotes/{{ post.slug }}/">
-      <span class="post-list-title">{{ post.title }}</span>
-      <span class="post-meta">
+  <article class="river-post" id="{{ post.slug }}" aria-labelledby="river-title-{{ post.slug }}">
+    <header class="river-post-header">
+      <h2 class="river-post-title" id="river-title-{{ post.slug }}">
+        <a href="{{ root }}fieldnotes/{{ post.slug }}/">{{ post.title }}</a>
+      </h2>
+      <div class="post-meta">
         <time datetime="{{ post.date }}">{{ post.date_display }}</time>
         {% if post.updated %}<span class="post-updated">&middot; updated {{ post.updated_display }}</span>{% endif %}
+        {% if post.author %}<span class="post-author">&middot; {{ post.author }}</span>{% endif %}
         <span class="byline-mark authorship-{{ post.authorship }}">{{ post.authorship_label }}</span>
-      </span>
-    </a>
-  </li>
+        &middot; <a class="post-permalink" href="{{ root }}fieldnotes/{{ post.slug }}/">Permalink</a>
+      </div>
+    </header>
+    <div class="prose">
+      {{ post.body_html_river | safe }}
+    </div>
+  </article>
   {% endfor %}
-</ul>
+</div>
 {% else %}
 <div class="empty-state">
   <p>Field Notes is moving in &mdash; posts will appear here.</p>

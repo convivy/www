@@ -8,7 +8,7 @@ In the process of creating one product, I (Jay) ended up building an extensive a
 
 Also, I have a blog. (It's 2006 somewhere!)
 
-Agentic software engineering is still nascent. The sense of exploration and the quest for learning is real. Also the software we’re making is good, and the tools for buildingO it get better every day.
+Agentic software engineering is still nascent. The sense of exploration and the quest for learning is real. Also the software we’re making is good, and the tools for building it get better every day.
 
 Along the way, I've encountered a lot of other technical professionals looking for an entry point into understanding how our work is changing.
 

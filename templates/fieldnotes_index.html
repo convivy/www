@@ -1,21 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Field Notes — Convivy{% endblock %}
+{% block description %}Field Notes — notes on agentic software engineering from Convivy.{% endblock %}
 {% block content %}
-<h1>Field Notes</h1>
+<header class="page-header">
+  <p class="kicker">Convivy</p>
+  <h1>Field Notes</h1>
+</header>
 {% if posts %}
 <ul class="post-list">
   {% for post in posts %}
   <li class="post-list-item">
-    <a href="{{ root }}fieldnotes/{{ post.slug }}/">{{ post.title }}</a>
-    <div class="post-meta">
-      <time datetime="{{ post.date }}">{{ post.date_display }}</time>
-      {% if post.updated %}<span class="post-updated">&middot; updated {{ post.updated_display }}</span>{% endif %}
-      <span class="byline-mark authorship-{{ post.authorship }}">{{ post.authorship_label }}</span>
-    </div>
+    <a class="post-list-link" href="{{ root }}fieldnotes/{{ post.slug }}/">
+      <span class="post-list-title">{{ post.title }}</span>
+      <span class="post-meta">
+        <time datetime="{{ post.date }}">{{ post.date_display }}</time>
+        {% if post.updated %}<span class="post-updated">&middot; updated {{ post.updated_display }}</span>{% endif %}
+        <span class="byline-mark authorship-{{ post.authorship }}">{{ post.authorship_label }}</span>
+      </span>
+    </a>
   </li>
   {% endfor %}
 </ul>
 {% else %}
-<p class="empty-state">Field Notes is moving in — posts will appear here.</p>
+<div class="empty-state">
+  <p>Field Notes is moving in &mdash; posts will appear here.</p>
+</div>
 {% endif %}
 {% endblock %}

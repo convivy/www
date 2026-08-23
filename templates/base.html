@@ -5,27 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Convivy{% endblock %}</title>
   <meta name="description" content="{% block description %}Convivy is an agentic software engineering lab operated by Jay Porter.{% endblock %}">
+  <meta name="theme-color" content="#faf8f2">
+  <meta property="og:site_name" content="Convivy">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ self.title() }}">
+  <meta property="og:description" content="{{ self.description() }}">
+  <meta property="og:image" content="https://convivy.com/static/sunrise-logo.png">
   <link rel="icon" type="image/png" href="{{ root }}static/sunrise-logo.png">
+  <link rel="apple-touch-icon" href="{{ root }}static/sunrise-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ root }}static/style.css">
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
-    <a class="site-title" href="{{ root }}">
-      <img class="site-logo" src="{{ root }}static/sunrise-logo.png" alt="" width="36" height="36">
-      Convivy
-    </a>
-    <nav class="site-nav">
-      <a href="{{ root }}fieldnotes/">Field Notes</a>
-    </nav>
+    <div class="site-header-inner">
+      <a class="site-title" href="{{ root }}">
+        <img class="site-logo" src="{{ root }}static/sunrise-logo.png" alt="" width="40" height="40">
+        <span>Convivy</span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="{{ root }}fieldnotes/">Field Notes</a>
+      </nav>
+    </div>
   </header>
-  <main>
+  <main id="main">
     {% block content %}{% endblock %}
   </main>
+  <div class="horizon" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="xMidYMax slice" focusable="false">
+      <!-- Rising sun -->
+      <circle cx="600" cy="48" r="24" fill="#c9892a"/>
+      <!-- Horizon arcs, echoing the sunrise mark -->
+      <ellipse cx="600" cy="290" rx="980" ry="238" fill="#e9edcf" stroke="#8aa892" stroke-width="2.5"/>
+      <ellipse cx="600" cy="316" rx="980" ry="238" fill="#dde5b4" stroke="#8aa892" stroke-width="2.5"/>
+    </svg>
+  </div>
   <footer class="site-footer">
-    <p>&copy; {{ year }} Convivy</p>
+    <div class="site-footer-inner">
+      <a class="footer-brand" href="{{ root }}">
+        <img src="{{ root }}static/sunrise-logo.png" alt="" width="28" height="28">
+        <span>Convivy</span>
+      </a>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="{{ root }}">Home</a>
+        <a href="{{ root }}fieldnotes/">Field Notes</a>
+      </nav>
+      <p class="footer-copy">&copy; {{ year }} Convivy</p>
+    </div>
   </footer>
 </body>
 </html>

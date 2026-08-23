@@ -15,7 +15,7 @@ public surface (starting with `convivy.com/fieldnotes`) becomes a renderer over 
 - **Orient serves the post corpus on a pull endpoint.** This site's build pulls the current
   corpus at build time — full corpus, every build, which keeps the build idempotent.
 - **Orient fires a rebuild trigger on publish** — a `repository_dispatch` (event type
-  `fieldnotes-publish`) to this repo when a post is published or updated. A daily scheduled
+  `fieldnotes-changed`) to this repo when a post is published or updated. A daily scheduled
   build is the fallback if a dispatch is ever missed.
 - **The build renders and deploys via Pages-from-Actions** (`actions/upload-pages-artifact` +
   `actions/deploy-pages`) — no `gh-pages` branch, no force-push. That old pattern is what fights
@@ -168,6 +168,6 @@ This branch is source, not yet live. To activate:
 
 Nothing else is left undone in the scaffold itself — the four templates, the corpus
 fetch/validate/error path, and the workflow's triggers (`push` to `main`,
-`repository_dispatch` for `fieldnotes-publish`, `workflow_dispatch`, and the daily schedule) are
+`repository_dispatch` for `fieldnotes-changed`, `workflow_dispatch`, and the daily schedule) are
 all in place and exercised locally (see the PR / commit message for the local verification
 output).

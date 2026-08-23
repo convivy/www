@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
   repository_dispatch:
-    types: [fieldnotes-publish]
+    types: [fieldnotes-changed]
   workflow_dispatch: {}
   schedule:
     # Daily fallback so a missed repository_dispatch (or a stale corpus

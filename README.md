@@ -93,6 +93,20 @@ static/style.css           all styling; no build step, no framework, no JS
 requirements.txt           markdown, jinja2, requests — pinned, nothing else
 ```
 
+### Previewing a PR
+
+Every PR against `main` builds the site (no deploy, no Orient secrets needed) and uploads the
+result as an artifact. To view it: open the PR's checks, find the `preview` job, and download the
+`site-preview` artifact. Unzip it, then **serve the folder rather than double-clicking
+`index.html`** — the site's links are root-relative, so opening the file directly (a `file://`
+URL) breaks `/fieldnotes/` links. From the unzipped directory:
+
+```
+python3 -m http.server
+```
+
+then open `http://localhost:8000/` in a browser.
+
 Run it locally with:
 
 ```

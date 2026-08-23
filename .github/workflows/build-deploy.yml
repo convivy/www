@@ -3,6 +3,8 @@ name: Build and Deploy
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   repository_dispatch:
     types: [fieldnotes-publish]
   workflow_dispatch: {}
@@ -22,6 +24,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +55,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -59,3 +63,30 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  preview:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build site (no Orient env vars)
+        # No ORIENT_FIELDNOTES_URL / CF_ACCESS_* here on purpose: a PR
+        # build never needs secrets, so a fork PR is safe to build this
+        # way — there is nothing sensitive in this job's environment for
+        # a malicious PR to exfiltrate. The build just renders the
+        # empty-state Field Notes index, same as any unconfigured build.
+        run: python build/build.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: _site/
+          retention-days: 7

@@ -37,9 +37,11 @@ build time. Pages output is static, so an Orient outage means new posts can't be
 it's back — never that the site itself goes down. The build is written to fail loudly rather than
 paper over that outage; see the corpus contract below.
 
-## Content contract — what Orient's endpoint must serve
+## Content contract — what Orient's endpoint actually serves
 
-`ORIENT_FIELDNOTES_URL` must return a JSON object of this shape:
+Orient is the store of truth for Field Notes; this section describes the shape of its deployed
+`/api/blog/corpus` response, which this build validates against. `ORIENT_FIELDNOTES_URL` must
+return a JSON object of this shape:
 
 ```json
 {
@@ -51,9 +53,10 @@ paper over that outage; see the corpus contract below.
       "updated": "2026-08-05",
       "author": "Jay Porter",
       "authorship": "human",
-      "body_markdown": "# Example Post\n\nBody text in markdown..."
+      "body": "# Example Post\n\nBody text in markdown..."
     }
-  ]
+  ],
+  "count": 1
 }
 ```
 
@@ -62,8 +65,13 @@ paper over that outage; see the corpus contract below.
   the post's byline.
 - Posts are sorted newest-first by `date` at build time — the endpoint does not need to
   pre-sort, but should not assume the build will use its ordering either.
-- `authorship` is `"human"` or `"model"` and is rendered as a small byline mark next to the date.
-  Any other value fails the build (see below) rather than rendering silently wrong.
+- `authorship` is server-attested and is one of `"human"`, `"collab"`, or `"llm"` — rendered as a
+  small byline mark (Human / Collab / LLM) next to the date. Any other value fails the build (see
+  below) rather than rendering silently wrong.
+- `body` is the post's markdown source. (Not `body_markdown` — Orient's deployed response uses the
+  shorter field name.)
+- `count`, when present, must equal `len(posts)`. A mismatch fails the build — this is the guard
+  against a response silently truncated somewhere upstream.
 - `slug` becomes the URL: `/fieldnotes/<slug>/`.
 
 This is the interface Orient's pull endpoint builds against. Treat a change to this shape as a
@@ -79,8 +87,13 @@ breaking change to both sides.
   wrong. It never falls back to an empty index in this case. A configured endpoint that silently
   yields an empty blog is the failure mode this pipeline is built to refuse — it would look like a
   successful deploy of nothing, and nobody would notice until a reader did.
-- **Auth headers**, sent only when the corresponding env vars are set: `CF_ACCESS_CLIENT_ID` →
-  `CF-Access-Client-Id`, `CF_ACCESS_CLIENT_SECRET` → `CF-Access-Client-Secret`.
+- **Auth headers.** The deployed endpoint sits behind two walls: a Cloudflare Access service token
+  at the edge, and an Orient-issued bearer token at the origin. When `ORIENT_FIELDNOTES_URL` is
+  set, all three credentials below are **required** — the build exits 1, naming exactly which is
+  missing, if any is absent:
+  - `CF_ACCESS_CLIENT_ID` → header `CF-Access-Client-Id`
+  - `CF_ACCESS_CLIENT_SECRET` → header `CF-Access-Client-Secret`
+  - `ORIENT_BLOG_TOKEN` → header `Authorization: Bearer <token>`
 
 ## Repo layout
 
@@ -136,6 +149,10 @@ This branch is source, not yet live. To activate:
      `team.convivy.com/api/fieldnotes/*`).
    - Actions **secrets** `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` — the Cloudflare
      Access service token scoped to that endpoint only.
+   - Actions **secret** `ORIENT_BLOG_TOKEN` — the Orient-issued bearer token the origin checks
+     behind Cloudflare Access. All three of these credentials are required together; the build
+     exits 1, naming exactly which is missing, if `ORIENT_FIELDNOTES_URL` is set without all
+     three.
    - The runbook flags that the GitHub-side dispatch token (Orient → this repo's
      `repository_dispatch`) has an open pre-check against an uncommitted platform decision about
      routing all `gh` calls through the Bosun. Until that resolves, the daily scheduled build in

@@ -47,6 +47,7 @@ jobs:
           ORIENT_FIELDNOTES_URL: ${{ vars.ORIENT_FIELDNOTES_URL }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          ORIENT_BLOG_TOKEN: ${{ secrets.ORIENT_BLOG_TOKEN }}
         run: python build/build.py
 
       - uses: actions/upload-pages-artifact@v3

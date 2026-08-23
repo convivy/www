@@ -164,14 +164,19 @@ p {
   border: 1px solid var(--color-border);
 }
 
-.byline-human {
+.authorship-human {
   color: var(--color-accent);
   border-color: var(--color-accent);
 }
 
-.byline-model {
+.authorship-collab {
   color: var(--color-accent-2);
   border-color: var(--color-accent-2);
+}
+
+.authorship-llm {
+  color: var(--color-text-muted);
+  border-color: var(--color-text-muted);
 }
 
 .empty-state {

@@ -123,9 +123,15 @@ jobs:
         # Force-push _site/ as a fresh commit onto www-preview's gh-pages
         # branch — last PR to build wins, there's no per-PR history to
         # preserve. The CNAME file doesn't survive the build, so it's
-        # re-written here before the push. The token goes in an auth
-        # header (never the URL, never echoed) so it can't leak into
-        # `git remote -v`, .git/config, or a process listing.
+        # re-written here before the push. The token goes in the remote
+        # URL rather than a Basic auth header: GitHub's git-over-HTTP
+        # wants Basic, not the Bearer scheme this used to send (which
+        # git can't use — it falls through to an interactive credential
+        # prompt and dies on a runner with no TTY), and a base64-encoded
+        # Basic header risks GNU base64's 76-column wrap splitting a
+        # long token across lines. This checkout is a fresh, ephemeral
+        # `_site/` tree discarded at the end of the job, so a
+        # URL-embedded credential here doesn't linger anywhere.
         run: |
           echo "preview.convivy.com" > _site/CNAME
           cd _site
@@ -134,9 +140,8 @@ jobs:
           git config user.email "actions@github.com"
           git add -A
           git commit -q -m "preview: convivy/www PR #${{ github.event.pull_request.number }} @ ${{ github.event.pull_request.head.sha }}"
-          git remote add origin https://github.com/convivy/www-preview.git
-          git -c http.extraheader="AUTHORIZATION: bearer ${PREVIEW_DEPLOY_TOKEN}" \
-            push --force origin gh-pages:gh-pages
+          git remote add origin https://x-access-token:${PREVIEW_DEPLOY_TOKEN}@github.com/convivy/www-preview.git
+          git push --force origin gh-pages:gh-pages
 
       - name: Comment preview URL on PR
         if: steps.check_token.outputs.has_token == 'true'

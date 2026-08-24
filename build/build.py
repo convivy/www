@@ -312,6 +312,17 @@ def build() -> None:
         encoding="utf-8",
     )
 
+    # People.
+    people_md = (CONTENT_DIR / "people.md").read_text(encoding="utf-8")
+    people_html = render_markdown(people_md)
+    people_tmpl = env.get_template("people.html")
+    people_dir = OUT_DIR / "people"
+    people_dir.mkdir(parents=True)
+    (people_dir / "index.html").write_text(
+        people_tmpl.render(root="/", year=year, body_html=people_html),
+        encoding="utf-8",
+    )
+
     # Field Notes.
     posts = load_corpus()
     fieldnotes_dir = OUT_DIR / "fieldnotes"

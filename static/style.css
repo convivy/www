@@ -256,7 +256,8 @@ h2 a:hover {
 
 /* The opening line reads as a standfirst. */
 .home > h1 + p,
-.people > h1 + p {
+.people > h1 + p,
+.links > h1 + p {
   font-size: 1.45rem;
   line-height: 1.5;
   font-weight: 500;
@@ -770,7 +771,8 @@ th {
   }
 
   .home > h1 + p,
-  .people > h1 + p {
+  .people > h1 + p,
+  .links > h1 + p {
     font-size: 1.3rem;
   }
 

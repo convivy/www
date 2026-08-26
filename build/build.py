@@ -37,6 +37,7 @@ import os
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 
 import markdown
@@ -57,6 +58,16 @@ MD = markdown.Markdown(extensions=["extra", "smarty"])
 # front page stays a readable length however large the corpus grows.
 RIVER_CAP = 5
 
+# Orient has been observed momentarily slow rather than down: the corpus
+# fetch hit a 30s read timeout three times in two days (2026-08-23 17:14
+# UTC, and the push-triggered deploys for both the People and Links page
+# merges), and both of the most recent two succeeded on the very next
+# manual retry. So: retry a few times with backoff before giving up,
+# rather than failing the whole deploy on one slow response.
+CORPUS_FETCH_ATTEMPTS = 3
+CORPUS_CONNECT_TIMEOUT = 5  # fail fast if the host is truly unreachable
+CORPUS_READ_TIMEOUT = 60  # generous, since a slow-but-alive Orient is the failure this retries
+
 
 class CorpusError(RuntimeError):
     """Raised when ORIENT_FIELDNOTES_URL is set but the corpus can't be used."""
@@ -65,6 +76,46 @@ class CorpusError(RuntimeError):
 def render_markdown(text: str) -> str:
     MD.reset()
     return MD.convert(text)
+
+
+def _get_corpus_with_retry(url: str, headers: dict[str, str]) -> requests.Response:
+    """GET `url`, retrying transport failures and 5xx responses only.
+
+    Up to CORPUS_FETCH_ATTEMPTS attempts, with exponential backoff (2s,
+    then 4s) between them. A 4xx response — 401/403 from the two auth
+    walls above all — is never retried: a rejected credential will not
+    succeed on a second try, and retrying it only turns a clear failure
+    into a slow one. Re-raises the last exception once attempts are
+    exhausted, unchanged, for the caller to translate into a CorpusError.
+    """
+    last_exc: requests.RequestException | None = None
+    for attempt in range(1, CORPUS_FETCH_ATTEMPTS + 1):
+        try:
+            resp = requests.get(
+                url, headers=headers, timeout=(CORPUS_CONNECT_TIMEOUT, CORPUS_READ_TIMEOUT)
+            )
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            is_5xx = (
+                isinstance(exc, requests.HTTPError)
+                and exc.response is not None
+                and exc.response.status_code >= 500
+            )
+            is_transport_error = not isinstance(exc, requests.HTTPError)
+            if not (is_transport_error or is_5xx):
+                raise  # 4xx: not retryable, surface immediately
+            last_exc = exc
+            if attempt < CORPUS_FETCH_ATTEMPTS:
+                backoff = 2**attempt
+                print(
+                    f"WARNING: Field Notes corpus fetch attempt {attempt}/"
+                    f"{CORPUS_FETCH_ATTEMPTS} failed ({exc}); retrying in {backoff}s...",
+                    file=sys.stderr,
+                )
+                time.sleep(backoff)
+        else:
+            return resp
+    raise last_exc
 
 
 def fetch_corpus(url: str, creds: dict[str, str]) -> list[dict]:
@@ -78,6 +129,9 @@ def fetch_corpus(url: str, creds: dict[str, str]) -> list[dict]:
     Raises CorpusError on any failure — network, HTTP status, JSON parse,
     or shape mismatch against the documented contract. Callers must not
     swallow this: a configured endpoint that fails must fail the build.
+    Retries a slow-but-alive Orient (see _get_corpus_with_retry); does not
+    retry an auth failure, and never falls back to a stale or empty corpus
+    — a failure here still fails the build, on purpose.
     """
     headers = {
         "CF-Access-Client-Id": creds["CF_ACCESS_CLIENT_ID"],
@@ -86,8 +140,7 @@ def fetch_corpus(url: str, creds: dict[str, str]) -> list[dict]:
     }
 
     try:
-        resp = requests.get(url, headers=headers, timeout=30)
-        resp.raise_for_status()
+        resp = _get_corpus_with_retry(url, headers)
     except requests.RequestException as exc:
         raise CorpusError(f"failed to fetch Field Notes corpus from {url}: {exc}") from exc
 

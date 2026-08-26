@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Links — Convivy{% endblock %}
+{% block description %}A short list of things Convivy links to.{% endblock %}
+{% block content %}
+<article class="links prose">
+  {{ body_html | safe }}
+</article>
+{% endblock %}

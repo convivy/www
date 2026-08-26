@@ -323,6 +323,17 @@ def build() -> None:
         encoding="utf-8",
     )
 
+    # Links.
+    links_md = (CONTENT_DIR / "links.md").read_text(encoding="utf-8")
+    links_html = render_markdown(links_md)
+    links_tmpl = env.get_template("links.html")
+    links_dir = OUT_DIR / "links"
+    links_dir.mkdir(parents=True)
+    (links_dir / "index.html").write_text(
+        links_tmpl.render(root="/", year=year, body_html=links_html),
+        encoding="utf-8",
+    )
+
     # Field Notes.
     posts = load_corpus()
     fieldnotes_dir = OUT_DIR / "fieldnotes"

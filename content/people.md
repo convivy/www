@@ -10,4 +10,4 @@ At Convivy we make useful things, including agentic engineering tools for making
 
 ## Katie Mayfield
 
-Katie is co-founder and co-owner of Convivy. She has spent twenty years building people systems and management cultures across food, hospitality, and CPG — VP People at Fellow, VP People & Change at La Tourangelle, COO of 4505 Meats — and in 2023 founded Katie Mayfield People & Culture, where she provides fractional Chief People Officer services and builds leadership systems for operators. She holds an SPHR.
+Katie is co-founder of Convivy. She has spent twenty years building people systems and management cultures across food, hospitality, and CPG — VP People at Fellow, VP People & Change at La Tourangelle, COO of 4505 Meats — and in 2023 founded Katie Mayfield People & Culture, where she provides fractional Chief People Officer services and builds leadership systems for operators. She holds an SPHR.

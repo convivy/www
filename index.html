@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Convivy</title>
+  <link rel="icon" type="image/png" href="assets/sunrise-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAF8F2; --ink: #1F2A24; --muted: #5a6660; --rule: #E5E0D2;
+      --green: #2F6B4F; --green-deep: #234f3a; --gold: #C9892A;
+    }
+    body { max-width: 44rem; margin: 0 auto; padding: 0 1.25rem 6rem;
+           background: var(--bg); color: var(--ink);
+           font: 17px/1.65 "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3 { font-family: "Outfit", system-ui, sans-serif; letter-spacing: -0.015em; }
+    h1 { font-size: 2.4rem; font-weight: 700; line-height: 1.15; color: var(--green); }
+    h2 { font-size: 1.4rem; font-weight: 700; margin-top: 2.6rem; color: var(--ink); }
+    h3 { font-weight: 500; }
+    a { color: var(--green); text-decoration: none; }
+    a:hover { color: var(--green-deep); text-decoration: underline; text-underline-offset: 3px; }
+    a.button { display: inline-block; margin: 0.25rem 0.6rem 0.25rem 0; padding: 0.6rem 1.15rem;
+           background: var(--green); color: #fff; border-radius: 6px; text-decoration: none;
+           font-family: "Outfit", system-ui, sans-serif; font-weight: 500; }
+    a.button:hover { background: var(--green-deep); color: #fff; text-decoration: none; }
+    strong { color: var(--ink); }
+    .hero { text-align: center; padding: 2.5rem 0 0.5rem; }
+    .hero img { width: 88px; height: auto; }
+    a.auth { display: inline-block; font-family: "Outfit", system-ui, sans-serif;
+           font-size: 0.78rem; font-weight: 500; border-radius: 999px;
+           padding: 0.14rem 0.7rem; margin: 0 0 0.4rem; border: 1px solid; }
+    a.auth:hover { text-decoration: none; filter: brightness(0.92); }
+    a.auth-human { color: #fff; background: var(--green); border-color: var(--green); }
+    a.auth-llm { color: var(--muted); background: #fff; border-color: var(--rule); }
+    a.auth-collab { color: #fff; background: var(--gold); border-color: var(--gold); }
+  </style>
+</head>
+<body>
+<div class="hero"><img src="assets/sunrise-logo.png" alt=""></div>
+<a class="auth auth-human" href="authorship.html">✍︎ Human-written</a>
+<h1 id="convivy">Convivy</h1>
+<p>Convivy is a software lab. We develop real products using an agentic development
+system. By "agentic development system" we mean a substrate of agents, tools, and
+workflows that takes care of most coding and reviewing, and assists with architecture
+and design.</p>
+<p>Our whole enterprise embraces deep transparency. We want to show how the system works,
+and hand you the tools and ideas to set up your own version if you'd like to.</p>
+<p><a class="button" href="https://lab.convivy.com">Explore the lab →</a></p>
+<h2 id="background">Background</h2>
+<p>I (Jay, co-founder) started Convivy as a side project to my day job as an engineering
+director at a technology startup. My goal was to build a multitenant SaaS that
+would help a group I participated in — a community ukulele orchestra — with required
+tasks which overwhelmed the resources you would expect at a community
+ukulele orchestra.</p>
+<p>The project took shape slowly, in fits and starts and the occasional pivot, until
+the ground under the software engineering industry started to shift dramatically in
+early 2026. Wanting to understand newly emerging engineering workflows, I dove back in.
+This time I was focused more on honing my understanding of the process than on my output.
+Before too long we had five products taking shape, having discovered the efficiency of
+threading development streams.</p>
+<p>In the process, I found that a lot of other technical professionals were looking
+for an entry point into understanding how our work is changing.</p>
+<h2 id="why-the-products-exist">Why the products exist</h2>
+<p>Every product in our suite comes from a need we've encountered in our day-to-day lives.
+Some relate to our day jobs, others are just for fun. They won't raise any capital
+from VCs, but there may be a modest market for them. Most importantly, this new wave
+of engineering tools allows us to build the things we'd like to exist, instead of
+just hoping that someone else finds it worthwhile to do so.</p>
+<p>Our products are currently referred to as Lyra, Vela, Corvus, Orion,
+and Pavo. You'll see these working names until each is close to launch. Follow along.</p>
+<h2 id="why-the-lab-exists">Why the lab exists</h2>
+<p>Agentic engineering is here and it is powerful. It accelerates development to such
+an extent that while the specifics will surely change, I believe it won't go away.</p>
+<p>Information to help us start well is thin, and many places you'd look for it are
+full of hype and slop. I hope that by opening up a lot of what I set up here, it
+provides a useful entry point to engineers that would like to tinker, play around,
+build some things, and develop a real understanding of how these systems work.</p>
+<p>Because that's what engineers have always done. And that's what engineers will
+continue to do, no matter how the tools change.</p>
+<p>See it all in the open at <strong><a href="https://lab.convivy.com">lab.convivy.com</a></strong> — the dashboards, the knowledge base, the reference docs, and Field Notes.</p>
+<h2 id="whos-here">Who's here</h2>
+<p><strong>Jay Porter</strong><br />
+Co-founder · Builder</p>
+<p>Twenty years across hospitality and tech: twelve as a restaurant owner-operator, technical leadership at Salesforce and Meta, now Engineering Director at Amperon.</p>
+<p><strong>Katie Mayfield, SPHR</strong><br />
+Co-founder · Operator</p>
+<p>Twenty years building people systems and management cultures across food, hospitality, and CPG. Founder of Katie Mayfield People &amp; Culture; former VP People at Fellow.</p>
+<h2 id="get-in-touch">Get in touch</h2>
+<p><a href="mailto:hello@convivy.com">hello@convivy.com</a></p>
+<hr />
+<p>© Convivy LLC</p>
+</body>
+</html>

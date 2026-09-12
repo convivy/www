@@ -37,16 +37,17 @@ public surface (starting with `convivy.com/fieldnotes`) becomes a renderer over 
 commit here. The only things that land as PRs against this repo are changes to the site's own
 build, templates, or styling.
 
-**The accepted coupling:** the site build depends on the Orient endpoint being reachable at
-build time. Pages output is static, so an Orient outage means new posts can't be published until
-it's back — never that the site itself goes down. The build is written to fail loudly rather than
-paper over that outage; see the corpus contract below.
+**The build does not need Orient to be reachable.** Once the `fieldnotes-corpus` branch exists, a
+build reads only this repo, so an Orient outage stops new posts being published, never a build or
+the site. Until the branch exists, the transitional pull depends on Orient being reachable at
+build time, and fails loudly rather than papering over an outage; see the corpus contract below.
 
-## Content contract — what Orient's endpoint actually serves
+## Content contract — what Orient publishes
 
-Orient is the store of truth for Field Notes; this section describes the shape of its deployed
-`/api/blog/corpus` response, which this build validates against. `ORIENT_FIELDNOTES_URL` must
-return a JSON object of this shape:
+Orient is the store of truth for Field Notes. This section describes the shape of `corpus.json` on
+the `fieldnotes-corpus` branch, which is also the shape of the transitional `/api/blog/corpus`
+response. The build validates both sources against it with the same checks. Each must be a JSON
+object of this shape:
 
 ```json
 {
@@ -82,12 +83,15 @@ return a JSON object of this shape:
   against a response silently truncated somewhere upstream.
 - `slug` becomes the URL: `/fieldnotes/<slug>/`.
 
-This is the interface Orient's pull endpoint builds against. Treat a change to this shape as a
-breaking change to both sides.
+This is the interface Orient's push, and the transitional pull endpoint, build against. Treat a
+change to this shape as a breaking change to both sides.
 
 ### Build behavior against the corpus
 
-- **`ORIENT_FIELDNOTES_URL` unset** — the build succeeds and renders an empty-state Field Notes
+- **`FIELDNOTES_CORPUS_FILE` set** (the workflow sets it from the `fieldnotes-corpus` branch) — it
+  is the only source. A missing, unreadable or off-contract file exits non-zero, naming what was
+  wrong, and the pull is not tried.
+- **Neither `FIELDNOTES_CORPUS_FILE` nor `ORIENT_FIELDNOTES_URL` set** — the build succeeds and renders an empty-state Field Notes
   index ("Field Notes is moving in — posts will appear here."). This is the expected state before
   Orient's endpoint and the pipeline tokens exist.
 - **`ORIENT_FIELDNOTES_URL` set, and the fetch fails, times out, or returns anything that doesn't

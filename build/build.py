@@ -16,7 +16,11 @@ Environment:
                                  fieldnotes-corpus branch. When set it is
                                  the only source: a missing, unreadable or
                                  malformed file exits non-zero, and the pull
-                                 below is not tried.
+                                 below is not tried. A file with no posts
+                                 also exits non-zero unless
+                                 FIELDNOTES_ALLOW_EMPTY is "1".
+    FIELDNOTES_ALLOW_EMPTY      "1" lets the branch file hold zero posts,
+                                 for a deliberate unpublish of everything.
     ORIENT_FIELDNOTES_URL       Corpus endpoint, the transitional fallback
                                  used only when FIELDNOTES_CORPUS_FILE is
                                  unset. Unset -> build with an
@@ -344,6 +348,18 @@ def load_corpus() -> list[dict]:
             posts = read_corpus_file(Path(corpus_file))
         except CorpusError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
+            sys.exit(1)
+        # Refuse an empty branch corpus by default. On 2026-09-12 a development
+        # run of Orient's push created this branch holding zero posts; a merge
+        # ordered before Orient's real seed would otherwise have published an
+        # empty Field Notes with a green run.
+        if not posts and os.environ.get("FIELDNOTES_ALLOW_EMPTY") != "1":
+            print(
+                f"ERROR: Field Notes corpus from {corpus_file} has 0 posts. Refusing to "
+                "publish an empty Field Notes; set FIELDNOTES_ALLOW_EMPTY=1 to do it "
+                "deliberately.",
+                file=sys.stderr,
+            )
             sys.exit(1)
         print(f"Field Notes corpus: {len(posts)} post(s) from the fieldnotes-corpus branch")
         posts.sort(key=lambda p: p["date"], reverse=True)

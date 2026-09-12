@@ -68,6 +68,9 @@ jobs:
           # is the build's only corpus source; the pull below is the
           # transitional fallback while it is empty.
           FIELDNOTES_CORPUS_FILE: ${{ steps.corpus.outputs.file }}
+          # A branch corpus with zero posts fails the build unless this repo
+          # variable is "1", set only to unpublish everything on purpose.
+          FIELDNOTES_ALLOW_EMPTY: ${{ vars.FIELDNOTES_ALLOW_EMPTY }}
           # Unset ORIENT_FIELDNOTES_URL builds an empty-state Field Notes
           # index; a set-but-broken corpus fails this step on purpose.
           # Referencing an unconfigured variable/secret below evaluates to

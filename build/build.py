@@ -2,15 +2,24 @@
 """Static site builder for convivy.com.
 
 Renders `_site/` from `templates/` + `content/`, plus (optionally) the
-Field Notes corpus pulled from an Orient endpoint at build time. Content
-never lives in this repo — see README.md for the corpus contract this
-script builds against.
+Field Notes corpus. Orient pushes the published corpus to this repo's orphan
+`fieldnotes-corpus` branch, and the workflow hands this script that branch's
+`corpus.json`. Until that branch exists, the corpus is pulled from an Orient
+endpoint instead. Content never lives on `main` — see README.md for the
+corpus contract this script builds against.
 
 Usage:
     python build/build.py
 
 Environment:
-    ORIENT_FIELDNOTES_URL       Corpus endpoint. Unset -> build with an
+    FIELDNOTES_CORPUS_FILE      Path to corpus.json, read from the
+                                 fieldnotes-corpus branch. When set it is
+                                 the only source: a missing, unreadable or
+                                 malformed file exits non-zero, and the pull
+                                 below is not tried.
+    ORIENT_FIELDNOTES_URL       Corpus endpoint, the transitional fallback
+                                 used only when FIELDNOTES_CORPUS_FILE is
+                                 unset. Unset -> build with an
                                  empty-state Field Notes index. Set but the
                                  fetch fails or the payload is malformed ->
                                  this script exits non-zero. A configured
@@ -70,7 +79,7 @@ CORPUS_READ_TIMEOUT = 60  # generous, since a slow-but-alive Orient is the failu
 
 
 class CorpusError(RuntimeError):
-    """Raised when ORIENT_FIELDNOTES_URL is set but the corpus can't be used."""
+    """Raised when a configured corpus source can't be used."""
 
 
 def render_markdown(text: str) -> str:
@@ -149,16 +158,42 @@ def fetch_corpus(url: str, creds: dict[str, str]) -> list[dict]:
     except ValueError as exc:
         raise CorpusError(f"Field Notes corpus at {url} did not return valid JSON: {exc}") from exc
 
+    return validate_corpus(payload, source=url)
+
+
+def read_corpus_file(path: Path) -> list[dict]:
+    """Read and validate corpus.json from the fieldnotes-corpus branch.
+
+    Raises CorpusError when the file is missing, unreadable, not JSON, or off
+    the contract. The checks are exactly those the pull applies.
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise CorpusError(f"could not read Field Notes corpus file {path}: {exc}") from exc
+    try:
+        payload = json.loads(text)
+    except ValueError as exc:
+        raise CorpusError(f"Field Notes corpus file {path} is not valid JSON: {exc}") from exc
+    return validate_corpus(payload, source=str(path))
+
+
+def validate_corpus(payload: object, *, source: str) -> list[dict]:
+    """Check `payload` against the corpus contract and return its posts.
+
+    Raises CorpusError naming `source` and exactly what is wrong. Shared by the
+    branch file and the pull, so both sources are held to one contract.
+    """
     if not isinstance(payload, dict) or "posts" not in payload:
         raise CorpusError(
-            f"Field Notes corpus at {url} is malformed: expected a JSON object with a "
+            f"Field Notes corpus from {source} is malformed: expected a JSON object with a "
             f"'posts' key, got: {type(payload).__name__}"
         )
 
     posts = payload["posts"]
     if not isinstance(posts, list):
         raise CorpusError(
-            f"Field Notes corpus at {url} is malformed: 'posts' must be a list, "
+            f"Field Notes corpus from {source} is malformed: 'posts' must be a list, "
             f"got: {type(posts).__name__}"
         )
 
@@ -168,7 +203,7 @@ def fetch_corpus(url: str, creds: dict[str, str]) -> list[dict]:
     # than quietly publish a partial corpus.
     if "count" in payload and payload["count"] != len(posts):
         raise CorpusError(
-            f"Field Notes corpus at {url} is malformed: 'count' says "
+            f"Field Notes corpus from {source} is malformed: 'count' says "
             f"{payload['count']!r} but 'posts' has {len(posts)} item(s)"
         )
 
@@ -303,6 +338,17 @@ def load_corpus() -> list[dict]:
     credential(s) are absent, if the URL is set but any of the two
     Cloudflare Access creds or the Orient bearer token is missing.
     """
+    corpus_file = os.environ.get("FIELDNOTES_CORPUS_FILE")
+    if corpus_file:
+        try:
+            posts = read_corpus_file(Path(corpus_file))
+        except CorpusError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            sys.exit(1)
+        print(f"Field Notes corpus: {len(posts)} post(s) from the fieldnotes-corpus branch")
+        posts.sort(key=lambda p: p["date"], reverse=True)
+        return [prepare_post(p) for p in posts]
+
     url = os.environ.get("ORIENT_FIELDNOTES_URL")
     if not url:
         return []
@@ -326,6 +372,7 @@ def load_corpus() -> list[dict]:
     except CorpusError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(1)
+    print(f"Field Notes corpus: {len(posts)} post(s) pulled from Orient")
 
     posts.sort(key=lambda p: p["date"], reverse=True)
     return [prepare_post(p) for p in posts]

@@ -12,11 +12,16 @@ force-pushed HTML to two public repos' `gh-pages` branches. That repo is retirin
 Orient — Convivy's internal knowledge store — becomes the store of truth for the blog, and every
 public surface (starting with `convivy.com/fieldnotes`) becomes a renderer over it. Concretely:
 
-- **Orient serves the post corpus on a pull endpoint.** This site's build pulls the current
-  corpus at build time — full corpus, every build, which keeps the build idempotent.
-- **Orient fires a rebuild trigger on publish** — a `repository_dispatch` (event type
-  `fieldnotes-changed`) to this repo when a post is published or updated. A daily scheduled
-  build is the fallback if a dispatch is ever missed.
+- **Orient pushes the post corpus to this repo.** On every publish, Orient writes the full
+  published corpus as `corpus.json` to the orphan branch `fieldnotes-corpus`, which holds that one
+  file and nothing else, then fires a `repository_dispatch` (event type `fieldnotes-changed`)
+  naming the commit it pushed. The build reads `corpus.json` from that branch: at the dispatched
+  commit when it is on the branch, and at the branch head for every other build. The build takes
+  the full corpus every time, which keeps it idempotent, and nothing outside needs a way into
+  Orient. A daily scheduled build is the fallback if a dispatch is ever missed.
+- **The pull endpoint is transitional.** Until the `fieldnotes-corpus` branch exists, the build
+  pulls the corpus from Orient's endpoint as it did before. That path, and the credentials it
+  needs, will be removed once the branch is live.
 - **The build renders and deploys via Pages-from-Actions** (`actions/upload-pages-artifact` +
   `actions/deploy-pages`) — no `gh-pages` branch, no force-push. That old pattern is what fights
   branch protection; this pipeline doesn't need branch protection worked around because nothing

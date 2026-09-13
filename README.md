@@ -131,32 +131,15 @@ python build/build.py
 Output goes to `_site/` (gitignored — recreated by every build; add a `.gitignore` if one isn't
 present when this lands on `main`).
 
-## Activation checklist — what Jay does to turn this on
+## Credentials the pipeline depends on
 
-This branch is source, not yet live. To activate:
+The production build job holds no secret. Two fine-grained GitHub tokens make the pipeline run,
+both minted and rotated per the runbook `company/runbooks/mint-fieldnotes-pipeline-tokens` in the
+knowledge repo:
 
-1. **Promote `site-src` to `main`.** Rename or merge this branch to `main`, and set `main` as the
-   repo's default branch.
-2. **Set Pages source to "GitHub Actions"** in repo Settings → Pages (currently building from
-   `gh-pages` via the legacy workflow — leave `gh-pages` alone until this repo's new pipeline is
-   verified live, then it can be deleted).
-3. **Confirm the custom domain.** The current `gh-pages` tree carries a `CNAME` for `convivy.com`;
-   this build also writes that `CNAME` into `_site/` on every build, but Settings → Pages →
-   Custom domain should be (re)confirmed once Pages source changes.
-4. **The GitHub-side dispatch token** (Orient → this repo's `repository_dispatch`), per the
-   runbook at `company/runbooks/mint-fieldnotes-pipeline-tokens` in the knowledge repo, has an
-   open pre-check against an uncommitted platform decision about routing all `gh` calls through
-   the Bosun. Until that resolves, the daily scheduled build in this workflow is the fallback
-   path — new posts go live on the next scheduled build rather than instantly on publish. Nothing
-   here needs to change when that resolves; it only affects whether Orient's dispatch token gets
-   minted.
-5. **Ingest the Field Notes corpus into Orient's store.** As of this scaffold, Orient does not
-   yet hold the posts — they're still files in the (retiring) `convivy-lab` repo. This build shows
-   the empty state until that ingest happens and Orient starts pushing to the `fieldnotes-corpus`
-   branch.
-
-Nothing else is left undone in the scaffold itself — the four templates, the corpus
-read/validate/error path, and the workflow's triggers (`push` to `main`,
-`repository_dispatch` for `fieldnotes-changed`, `workflow_dispatch`, and the daily schedule) are
-all in place and exercised locally (see the PR / commit message for the local verification
-output).
+- **Orient's dispatch token**, held on Orient's side, with Contents read/write on this repo only.
+  Orient uses it to push `corpus.json` to `fieldnotes-corpus` and to send the `fieldnotes-changed`
+  dispatch. Ruleset 23102478 lets only an OrganizationAdmin create or update that branch, and the
+  token's owner carries that exemption. Ruleset 23102477 blocks deleting or force-pushing it.
+- **`PREVIEW_DEPLOY_TOKEN`**, a repository secret here, with Contents read/write on
+  `convivy/www-preview` only. The preview job uses it to publish PR builds to preview.convivy.com.

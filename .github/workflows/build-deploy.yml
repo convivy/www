@@ -36,8 +36,41 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Fetch the Field Notes corpus branch
+        id: corpus
+        # Orient pushes the published corpus to the orphan branch
+        # `fieldnotes-corpus`, which holds corpus.json and nothing else. It
+        # carries no .github directory, and the `push` trigger above names
+        # only main, so a push there runs no workflow. A dispatch names the
+        # commit Orient pushed; that commit is used only when it is on the
+        # branch, so a dispatch cannot pick corpus.json out of any other
+        # commit. Until the branch exists, the build pulls from Orient.
+        env:
+          CORPUS_SHA: ${{ github.event.client_payload.corpus_sha }}
+        run: |
+          if ! git fetch --quiet --no-tags origin +refs/heads/fieldnotes-corpus:refs/remotes/origin/fieldnotes-corpus; then
+            echo "No fieldnotes-corpus branch yet; this build pulls the corpus from Orient."
+            exit 0
+          fi
+          ref=refs/remotes/origin/fieldnotes-corpus
+          if [[ "$CORPUS_SHA" =~ ^[0-9a-f]{40}$ ]] && git merge-base --is-ancestor "$CORPUS_SHA" "$ref" 2>/dev/null; then
+            ref="$CORPUS_SHA"
+          elif [ -n "$CORPUS_SHA" ]; then
+            echo "::warning::dispatch corpus_sha is not a commit on fieldnotes-corpus; using the branch head"
+          fi
+          git show "$ref:corpus.json" > "$RUNNER_TEMP/corpus.json"
+          echo "file=$RUNNER_TEMP/corpus.json" >> "$GITHUB_OUTPUT"
+          echo "Field Notes corpus: fieldnotes-corpus at $(git rev-parse "$ref")"
+
       - name: Build site
         env:
+          # Set by the step above once the corpus branch exists. When set it
+          # is the build's only corpus source; the pull below is the
+          # transitional fallback while it is empty.
+          FIELDNOTES_CORPUS_FILE: ${{ steps.corpus.outputs.file }}
+          # A branch corpus with zero posts fails the build unless this repo
+          # variable is "1", set only to unpublish everything on purpose.
+          FIELDNOTES_ALLOW_EMPTY: ${{ vars.FIELDNOTES_ALLOW_EMPTY }}
           # Unset ORIENT_FIELDNOTES_URL builds an empty-state Field Notes
           # index; a set-but-broken corpus fails this step on purpose.
           # Referencing an unconfigured variable/secret below evaluates to

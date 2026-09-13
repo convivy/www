@@ -18,17 +18,15 @@ public surface (starting with `convivy.com/fieldnotes`) becomes a renderer over 
   naming the commit it pushed. The build reads `corpus.json` from that branch: at the dispatched
   commit when it is on the branch, and at the branch head for every other build. The build takes
   the full corpus every time, which keeps it idempotent, and nothing outside needs a way into
-  Orient. A daily scheduled build is the fallback if a dispatch is ever missed.
-- **The pull endpoint is transitional.** Until the `fieldnotes-corpus` branch exists, the build
-  pulls the corpus from Orient's endpoint as it did before. That path, and the credentials it
-  needs, will be removed once the branch is live.
+  Orient. A daily scheduled build is the fallback if a dispatch is ever missed. This branch is the
+  production build's only corpus source.
 - **The build renders and deploys via Pages-from-Actions** (`actions/upload-pages-artifact` +
   `actions/deploy-pages`) — no `gh-pages` branch, no force-push. That old pattern is what fights
   branch protection; this pipeline doesn't need branch protection worked around because nothing
   but this repo's own sources ever needs to land on `main`.
 - **The human publish gate lives upstream, in the Writing Desk.** Jay's publish action there,
   attested via Cloudflare Access, is the moment of human decision. Everything downstream of that
-  — the dispatch, the pull, the build, the deploy — is mechanics.
+  — the dispatch, the push, the build, the deploy — is mechanics.
 - **Styling boundary:** content is the only thing that crosses the seam. This repo owns every
   template and every line of CSS `/fieldnotes` renders with; Orient sends markdown and metadata,
   never markup.
@@ -37,17 +35,15 @@ public surface (starting with `convivy.com/fieldnotes`) becomes a renderer over 
 commit here. The only things that land as PRs against this repo are changes to the site's own
 build, templates, or styling.
 
-**The build does not need Orient to be reachable.** Once the `fieldnotes-corpus` branch exists, a
-build reads only this repo, so an Orient outage stops new posts being published, never a build or
-the site. Until the branch exists, the transitional pull depends on Orient being reachable at
-build time, and fails loudly rather than papering over an outage; see the corpus contract below.
+**The build does not need Orient to be reachable at build time.** A build reads only this repo's
+`fieldnotes-corpus` branch, so an Orient outage stops new posts being published, never a build or
+the site.
 
 ## Content contract — what Orient publishes
 
 Orient is the store of truth for Field Notes. This section describes the shape of `corpus.json` on
-the `fieldnotes-corpus` branch, which is also the shape of the transitional `/api/blog/corpus`
-response. The build validates both sources against it with the same checks. Each must be a JSON
-object of this shape:
+the `fieldnotes-corpus` branch, which the build validates against. It must be a JSON object of
+this shape:
 
 ```json
 {
@@ -69,43 +65,38 @@ object of this shape:
 - `date` and `updated` are ISO 8601 (`YYYY-MM-DD`, or a full timestamp — only the date portion is
   used for display). `updated` is optional; when present it's shown as "updated \<date\>" next to
   the post's byline.
-- Posts are sorted newest-first by `date` at build time — the endpoint does not need to
+- Posts are sorted newest-first by `date` at build time — `corpus.json` does not need to
   pre-sort, but should not assume the build will use its ordering either.
 - `authorship` is server-attested and is one of `"human"`, `"collab"`, or `"llm"` — rendered as a
   small byline mark (Human / Collab / LLM) next to the date. Any other value fails the build (see
   below) rather than rendering silently wrong.
-- `body` is the post's markdown source. (Not `body_markdown` — Orient's deployed response uses the
+- `body` is the post's markdown source. (Not `body_markdown` — Orient's `corpus.json` uses the
   shorter field name.) Bodies may begin with the title restated as a heading (as in the example
   above); the build strips a leading heading from `body` when its text matches `title`, so the
   templates' own title rendering (`<h1>`/`<h2>`) is never duplicated. A leading heading whose text
   doesn't match `title` is left in place.
 - `count`, when present, must equal `len(posts)`. A mismatch fails the build — this is the guard
-  against a response silently truncated somewhere upstream.
+  against a corpus silently truncated somewhere upstream.
 - `slug` becomes the URL: `/fieldnotes/<slug>/`.
 
-This is the interface Orient's push, and the transitional pull endpoint, build against. Treat a
-change to this shape as a breaking change to both sides.
+This is the interface Orient's push builds against. Treat a change to this shape as a breaking
+change to both Orient and this build.
 
 ### Build behavior against the corpus
 
 - **`FIELDNOTES_CORPUS_FILE` set** (the workflow sets it from the `fieldnotes-corpus` branch) — it
-  is the only source. A missing, unreadable or off-contract file exits non-zero, naming what was
-  wrong, and the pull is not tried.
-- **Neither `FIELDNOTES_CORPUS_FILE` nor `ORIENT_FIELDNOTES_URL` set** — the build succeeds and renders an empty-state Field Notes
-  index ("Field Notes is moving in — posts will appear here."). This is the expected state before
-  Orient's endpoint and the pipeline tokens exist.
-- **`ORIENT_FIELDNOTES_URL` set, and the fetch fails, times out, or returns anything that doesn't
-  match the contract above** — the build **exits non-zero** with a specific error naming what was
-  wrong. It never falls back to an empty index in this case. A configured endpoint that silently
-  yields an empty blog is the failure mode this pipeline is built to refuse — it would look like a
-  successful deploy of nothing, and nobody would notice until a reader did.
-- **Auth headers.** The deployed endpoint sits behind two walls: a Cloudflare Access service token
-  at the edge, and an Orient-issued bearer token at the origin. When `ORIENT_FIELDNOTES_URL` is
-  set, all three credentials below are **required** — the build exits 1, naming exactly which is
-  missing, if any is absent:
-  - `CF_ACCESS_CLIENT_ID` → header `CF-Access-Client-Id`
-  - `CF_ACCESS_CLIENT_SECRET` → header `CF-Access-Client-Secret`
-  - `ORIENT_BLOG_TOKEN` → header `Authorization: Bearer <token>`
+  is the build's only corpus source. A missing, unreadable or off-contract file exits non-zero,
+  naming what was wrong.
+- **`FIELDNOTES_CORPUS_FILE` unset** — the build succeeds and renders an empty-state Field Notes
+  index ("Field Notes is moving in — posts will appear here."). This is what the preview job
+  builds, since it never sets `FIELDNOTES_CORPUS_FILE`.
+- **A branch corpus with zero posts** — the build exits non-zero unless the repo variable
+  `FIELDNOTES_ALLOW_EMPTY` is `"1"`, set only to unpublish everything on purpose. A branch that
+  silently yields an empty blog is the failure mode this pipeline is built to refuse — it would
+  look like a successful deploy of nothing, and nobody would notice until a reader did.
+- **The `fieldnotes-corpus` branch itself is missing** — the workflow's "Fetch the Field Notes
+  corpus branch" step fails the build job before `build.py` ever runs, naming the branch. There is
+  no fallback source to build from instead.
 
 ## Repo layout
 
@@ -115,7 +106,7 @@ content/home.md            the home page's markdown source (Jay's copy, edited v
 templates/                 base.html, home.html, fieldnotes_index.html, post.html — Jinja2
 static/style.css           all styling; no build step, no framework, no JS
 .github/workflows/build-deploy.yml   the Actions pipeline
-requirements.txt           markdown, jinja2, requests — pinned, nothing else
+requirements.txt           markdown, jinja2 — pinned, nothing else
 ```
 
 ### Previewing a PR
@@ -140,44 +131,15 @@ python build/build.py
 Output goes to `_site/` (gitignored — recreated by every build; add a `.gitignore` if one isn't
 present when this lands on `main`).
 
-## Activation checklist — what Jay does to turn this on
+## Credentials the pipeline depends on
 
-This branch is source, not yet live. To activate:
+The production build job holds no secret. Two fine-grained GitHub tokens make the pipeline run,
+both minted and rotated per the runbook `company/runbooks/mint-fieldnotes-pipeline-tokens` in the
+knowledge repo:
 
-1. **Promote `site-src` to `main`.** Rename or merge this branch to `main`, and set `main` as the
-   repo's default branch.
-2. **Set Pages source to "GitHub Actions"** in repo Settings → Pages (currently building from
-   `gh-pages` via the legacy workflow — leave `gh-pages` alone until this repo's new pipeline is
-   verified live, then it can be deleted).
-3. **Confirm the custom domain.** The current `gh-pages` tree carries a `CNAME` for `convivy.com`;
-   this build also writes that `CNAME` into `_site/` on every build, but Settings → Pages →
-   Custom domain should be (re)confirmed once Pages source changes.
-4. **Mint and add the pipeline credentials**, per the runbook at
-   `company/runbooks/mint-fieldnotes-pipeline-tokens` in the knowledge repo:
-   - Actions **variable** `ORIENT_FIELDNOTES_URL` — the corpus pull endpoint. The runbook notes
-     the exact path is still being confirmed with the Orient co (candidate:
-     `team.convivy.com/api/fieldnotes/*`).
-   - Actions **secrets** `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` — the Cloudflare
-     Access service token scoped to that endpoint only.
-   - Actions **secret** `ORIENT_BLOG_TOKEN` — the Orient-issued bearer token the origin checks
-     behind Cloudflare Access. All three of these credentials are required together; the build
-     exits 1, naming exactly which is missing, if `ORIENT_FIELDNOTES_URL` is set without all
-     three.
-   - The runbook flags that the GitHub-side dispatch token (Orient → this repo's
-     `repository_dispatch`) has an open pre-check against an uncommitted platform decision about
-     routing all `gh` calls through the Bosun. Until that resolves, the daily scheduled build in
-     this workflow is the fallback path — new posts go live on the next scheduled build rather
-     than instantly on publish. Nothing here needs to change when that resolves; it only affects
-     whether Orient's dispatch token gets minted.
-5. **Ingest the Field Notes corpus into Orient's store.** As of this scaffold, Orient does not
-   yet hold the posts — they're still files in the (retiring) `convivy-lab` repo. This build will
-   correctly show the empty state until that ingest happens and the endpoint above is live; it
-   will hard-fail instead of silently showing nothing if the endpoint is configured before the
-   ingest is done and the endpoint returns something malformed, so ingest and endpoint-configuration
-   should land together.
-
-Nothing else is left undone in the scaffold itself — the four templates, the corpus
-fetch/validate/error path, and the workflow's triggers (`push` to `main`,
-`repository_dispatch` for `fieldnotes-changed`, `workflow_dispatch`, and the daily schedule) are
-all in place and exercised locally (see the PR / commit message for the local verification
-output).
+- **Orient's dispatch token**, held on Orient's side, with Contents read/write on this repo only.
+  Orient uses it to push `corpus.json` to `fieldnotes-corpus` and to send the `fieldnotes-changed`
+  dispatch. Ruleset 23102478 lets only an OrganizationAdmin create or update that branch, and the
+  token's owner carries that exemption. Ruleset 23102477 blocks deleting or force-pushing it.
+- **`PREVIEW_DEPLOY_TOKEN`**, a repository secret here, with Contents read/write on
+  `convivy/www-preview` only. The preview job uses it to publish PR builds to preview.convivy.com.

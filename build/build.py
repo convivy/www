@@ -4,42 +4,22 @@
 Renders `_site/` from `templates/` + `content/`, plus (optionally) the
 Field Notes corpus. Orient pushes the published corpus to this repo's orphan
 `fieldnotes-corpus` branch, and the workflow hands this script that branch's
-`corpus.json`. Until that branch exists, the corpus is pulled from an Orient
-endpoint instead. Content never lives on `main` — see README.md for the
-corpus contract this script builds against.
+`corpus.json`. Content never lives on `main` — see README.md for the corpus
+contract this script builds against.
 
 Usage:
     python build/build.py
 
 Environment:
     FIELDNOTES_CORPUS_FILE      Path to corpus.json, read from the
-                                 fieldnotes-corpus branch. When set it is
-                                 the only source: a missing, unreadable or
-                                 malformed file exits non-zero, and the pull
-                                 below is not tried. A file with no posts
-                                 also exits non-zero unless
-                                 FIELDNOTES_ALLOW_EMPTY is "1".
+                                 fieldnotes-corpus branch. Unset -> build
+                                 with an empty-state Field Notes index. Set
+                                 but the file is missing, unreadable, or
+                                 malformed -> this script exits non-zero. A
+                                 file with no posts also exits non-zero
+                                 unless FIELDNOTES_ALLOW_EMPTY is "1".
     FIELDNOTES_ALLOW_EMPTY      "1" lets the branch file hold zero posts,
                                  for a deliberate unpublish of everything.
-    ORIENT_FIELDNOTES_URL       Corpus endpoint, the transitional fallback
-                                 used only when FIELDNOTES_CORPUS_FILE is
-                                 unset. Unset -> build with an
-                                 empty-state Field Notes index. Set but the
-                                 fetch fails or the payload is malformed ->
-                                 this script exits non-zero. A configured
-                                 endpoint that silently yields an empty blog
-                                 is exactly the failure mode this build
-                                 refuses to produce.
-
-                                 When set, the endpoint sits behind two
-                                 walls: a Cloudflare Access service token at
-                                 the edge, and an Orient-issued bearer token
-                                 at the origin. All three of the following
-                                 are then REQUIRED — missing any one exits 1
-                                 naming exactly which:
-    CF_ACCESS_CLIENT_ID         Sent as header CF-Access-Client-Id.
-    CF_ACCESS_CLIENT_SECRET     Sent as header CF-Access-Client-Secret.
-    ORIENT_BLOG_TOKEN           Sent as header Authorization: Bearer <token>.
 """
 
 from __future__ import annotations
@@ -50,11 +30,9 @@ import os
 import re
 import shutil
 import sys
-import time
 from pathlib import Path
 
 import markdown
-import requests
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -71,16 +49,6 @@ MD = markdown.Markdown(extensions=["extra", "smarty"])
 # front page stays a readable length however large the corpus grows.
 RIVER_CAP = 5
 
-# Orient has been observed momentarily slow rather than down: the corpus
-# fetch hit a 30s read timeout three times in two days (2026-08-23 17:14
-# UTC, and the push-triggered deploys for both the People and Links page
-# merges), and both of the most recent two succeeded on the very next
-# manual retry. So: retry a few times with backoff before giving up,
-# rather than failing the whole deploy on one slow response.
-CORPUS_FETCH_ATTEMPTS = 3
-CORPUS_CONNECT_TIMEOUT = 5  # fail fast if the host is truly unreachable
-CORPUS_READ_TIMEOUT = 60  # generous, since a slow-but-alive Orient is the failure this retries
-
 
 class CorpusError(RuntimeError):
     """Raised when a configured corpus source can't be used."""
@@ -91,85 +59,11 @@ def render_markdown(text: str) -> str:
     return MD.convert(text)
 
 
-def _get_corpus_with_retry(url: str, headers: dict[str, str]) -> requests.Response:
-    """GET `url`, retrying transport failures and 5xx responses only.
-
-    Up to CORPUS_FETCH_ATTEMPTS attempts, with exponential backoff (2s,
-    then 4s) between them. A 4xx response — 401/403 from the two auth
-    walls above all — is never retried: a rejected credential will not
-    succeed on a second try, and retrying it only turns a clear failure
-    into a slow one. Re-raises the last exception once attempts are
-    exhausted, unchanged, for the caller to translate into a CorpusError.
-    """
-    last_exc: requests.RequestException | None = None
-    for attempt in range(1, CORPUS_FETCH_ATTEMPTS + 1):
-        try:
-            resp = requests.get(
-                url, headers=headers, timeout=(CORPUS_CONNECT_TIMEOUT, CORPUS_READ_TIMEOUT)
-            )
-            resp.raise_for_status()
-        except requests.RequestException as exc:
-            is_5xx = (
-                isinstance(exc, requests.HTTPError)
-                and exc.response is not None
-                and exc.response.status_code >= 500
-            )
-            is_transport_error = not isinstance(exc, requests.HTTPError)
-            if not (is_transport_error or is_5xx):
-                raise  # 4xx: not retryable, surface immediately
-            last_exc = exc
-            if attempt < CORPUS_FETCH_ATTEMPTS:
-                backoff = 2**attempt
-                print(
-                    f"WARNING: Field Notes corpus fetch attempt {attempt}/"
-                    f"{CORPUS_FETCH_ATTEMPTS} failed ({exc}); retrying in {backoff}s...",
-                    file=sys.stderr,
-                )
-                time.sleep(backoff)
-        else:
-            return resp
-    raise last_exc
-
-
-def fetch_corpus(url: str, creds: dict[str, str]) -> list[dict]:
-    """Fetch and validate the Field Notes corpus from `url`.
-
-    `creds` must already contain non-empty CF_ACCESS_CLIENT_ID,
-    CF_ACCESS_CLIENT_SECRET, and ORIENT_BLOG_TOKEN — the endpoint sits
-    behind both a Cloudflare Access service token (edge) and an
-    Orient-issued bearer token (origin), and answers 401 without both.
-
-    Raises CorpusError on any failure — network, HTTP status, JSON parse,
-    or shape mismatch against the documented contract. Callers must not
-    swallow this: a configured endpoint that fails must fail the build.
-    Retries a slow-but-alive Orient (see _get_corpus_with_retry); does not
-    retry an auth failure, and never falls back to a stale or empty corpus
-    — a failure here still fails the build, on purpose.
-    """
-    headers = {
-        "CF-Access-Client-Id": creds["CF_ACCESS_CLIENT_ID"],
-        "CF-Access-Client-Secret": creds["CF_ACCESS_CLIENT_SECRET"],
-        "Authorization": f"Bearer {creds['ORIENT_BLOG_TOKEN']}",
-    }
-
-    try:
-        resp = _get_corpus_with_retry(url, headers)
-    except requests.RequestException as exc:
-        raise CorpusError(f"failed to fetch Field Notes corpus from {url}: {exc}") from exc
-
-    try:
-        payload = resp.json()
-    except ValueError as exc:
-        raise CorpusError(f"Field Notes corpus at {url} did not return valid JSON: {exc}") from exc
-
-    return validate_corpus(payload, source=url)
-
-
 def read_corpus_file(path: Path) -> list[dict]:
     """Read and validate corpus.json from the fieldnotes-corpus branch.
 
     Raises CorpusError when the file is missing, unreadable, not JSON, or off
-    the contract. The checks are exactly those the pull applies.
+    the contract.
     """
     try:
         text = path.read_text(encoding="utf-8")
@@ -185,8 +79,7 @@ def read_corpus_file(path: Path) -> list[dict]:
 def validate_corpus(payload: object, *, source: str) -> list[dict]:
     """Check `payload` against the corpus contract and return its posts.
 
-    Raises CorpusError naming `source` and exactly what is wrong. Shared by the
-    branch file and the pull, so both sources are held to one contract.
+    Raises CorpusError naming `source` and exactly what is wrong.
     """
     if not isinstance(payload, dict) or "posts" not in payload:
         raise CorpusError(
@@ -336,60 +229,32 @@ def prepare_post(post: dict) -> dict:
 def load_corpus() -> list[dict]:
     """Return the Field Notes post list, or [] for the empty state.
 
-    Exits the process (non-zero) if ORIENT_FIELDNOTES_URL is set but the
-    corpus can't be fetched or is malformed — this must never degrade to
-    an empty index silently. Also exits non-zero, naming exactly which
-    credential(s) are absent, if the URL is set but any of the two
-    Cloudflare Access creds or the Orient bearer token is missing.
+    Exits the process (non-zero) if FIELDNOTES_CORPUS_FILE is set but the
+    corpus can't be read or is malformed — this must never degrade to an
+    empty index silently.
     """
     corpus_file = os.environ.get("FIELDNOTES_CORPUS_FILE")
-    if corpus_file:
-        try:
-            posts = read_corpus_file(Path(corpus_file))
-        except CorpusError as exc:
-            print(f"ERROR: {exc}", file=sys.stderr)
-            sys.exit(1)
-        # Refuse an empty branch corpus by default. On 2026-09-12 a development
-        # run of Orient's push created this branch holding zero posts; a merge
-        # ordered before Orient's real seed would otherwise have published an
-        # empty Field Notes with a green run.
-        if not posts and os.environ.get("FIELDNOTES_ALLOW_EMPTY") != "1":
-            print(
-                f"ERROR: Field Notes corpus from {corpus_file} has 0 posts. Refusing to "
-                "publish an empty Field Notes; set FIELDNOTES_ALLOW_EMPTY=1 to do it "
-                "deliberately.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        print(f"Field Notes corpus: {len(posts)} post(s) from the fieldnotes-corpus branch")
-        posts.sort(key=lambda p: p["date"], reverse=True)
-        return [prepare_post(p) for p in posts]
-
-    url = os.environ.get("ORIENT_FIELDNOTES_URL")
-    if not url:
+    if not corpus_file:
         return []
 
-    creds = {
-        "CF_ACCESS_CLIENT_ID": os.environ.get("CF_ACCESS_CLIENT_ID"),
-        "CF_ACCESS_CLIENT_SECRET": os.environ.get("CF_ACCESS_CLIENT_SECRET"),
-        "ORIENT_BLOG_TOKEN": os.environ.get("ORIENT_BLOG_TOKEN"),
-    }
-    missing = [name for name, value in creds.items() if not value]
-    if missing:
-        print(
-            "ERROR: ORIENT_FIELDNOTES_URL is set but missing required "
-            f"credential(s): {', '.join(missing)}",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
     try:
-        posts = fetch_corpus(url, creds)
+        posts = read_corpus_file(Path(corpus_file))
     except CorpusError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(1)
-    print(f"Field Notes corpus: {len(posts)} post(s) pulled from Orient")
-
+    # Refuse an empty branch corpus by default. On 2026-09-12 a development
+    # run of Orient's push created this branch holding zero posts; a merge
+    # ordered before Orient's real seed would otherwise have published an
+    # empty Field Notes with a green run.
+    if not posts and os.environ.get("FIELDNOTES_ALLOW_EMPTY") != "1":
+        print(
+            f"ERROR: Field Notes corpus from {corpus_file} has 0 posts. Refusing to "
+            "publish an empty Field Notes; set FIELDNOTES_ALLOW_EMPTY=1 to do it "
+            "deliberately.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    print(f"Field Notes corpus: {len(posts)} post(s) from the fieldnotes-corpus branch")
     posts.sort(key=lambda p: p["date"], reverse=True)
     return [prepare_post(p) for p in posts]
 

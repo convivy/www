@@ -44,13 +44,15 @@ jobs:
         # only main, so a push there runs no workflow. A dispatch names the
         # commit Orient pushed; that commit is used only when it is on the
         # branch, so a dispatch cannot pick corpus.json out of any other
-        # commit. Until the branch exists, the build pulls from Orient.
+        # commit. This branch is the production build's only corpus source
+        # — a missing branch fails this step rather than falling back to
+        # anything, since there is no fallback source left to build from.
         env:
           CORPUS_SHA: ${{ github.event.client_payload.corpus_sha }}
         run: |
           if ! git fetch --quiet --no-tags origin +refs/heads/fieldnotes-corpus:refs/remotes/origin/fieldnotes-corpus; then
-            echo "No fieldnotes-corpus branch yet; this build pulls the corpus from Orient."
-            exit 0
+            echo "::error::fieldnotes-corpus branch not found; the production build has no corpus source without it"
+            exit 1
           fi
           ref=refs/remotes/origin/fieldnotes-corpus
           if [[ "$CORPUS_SHA" =~ ^[0-9a-f]{40}$ ]] && git merge-base --is-ancestor "$CORPUS_SHA" "$ref" 2>/dev/null; then
@@ -64,23 +66,12 @@ jobs:
 
       - name: Build site
         env:
-          # Set by the step above once the corpus branch exists. When set it
-          # is the build's only corpus source; the pull below is the
-          # transitional fallback while it is empty.
+          # Set by the step above from the fieldnotes-corpus branch — the
+          # build's only corpus source.
           FIELDNOTES_CORPUS_FILE: ${{ steps.corpus.outputs.file }}
           # A branch corpus with zero posts fails the build unless this repo
           # variable is "1", set only to unpublish everything on purpose.
           FIELDNOTES_ALLOW_EMPTY: ${{ vars.FIELDNOTES_ALLOW_EMPTY }}
-          # Unset ORIENT_FIELDNOTES_URL builds an empty-state Field Notes
-          # index; a set-but-broken corpus fails this step on purpose.
-          # Referencing an unconfigured variable/secret below evaluates to
-          # an empty string rather than failing the expression, so this
-          # step is safe to run before Jay wires the runbook tokens up —
-          # it just builds the empty state until then.
-          ORIENT_FIELDNOTES_URL: ${{ vars.ORIENT_FIELDNOTES_URL }}
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-          ORIENT_BLOG_TOKEN: ${{ secrets.ORIENT_BLOG_TOKEN }}
         run: python build/build.py
 
       - uses: actions/upload-pages-artifact@v3

@@ -2,3 +2,19 @@ _site/
 __pycache__/
 *.pyc
 .venv/
+
+# Materialized by `knowledge-ctx use <profile>` on every dispatch into this repo
+# (agents, skills, settings) — regenerated, never authored here, so it is not
+# ours to commit.
+#
+# Added 2026-09-16 because nothing covered it. This machine's own global ignore
+# (~/.config/git/ignore) hides `.claude/settings.local.json` and nothing else, so
+# `git status` looked clean here while a fresh clone or a CI runner would have
+# staged that file on `git add -A`. The rest of `.claude/` was never hidden at
+# all. Runs have been dispatched against this repo (five on 2026-09-12), so the
+# directory does get written; the signals repo showed the same gap the same day
+# with 23 untracked files sitting in it.
+#
+# Nothing under `.claude/` is in this repo's history, so ignoring is sufficient —
+# there is nothing to untrack.
+.claude/

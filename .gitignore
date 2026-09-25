@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 
-# Materialized by `knowledge-ctx use <profile>` on every dispatch into this repo
+# Individuated by `knowledge-ctx use <profile>` on every dispatch into this repo
 # (agents, skills, settings) — regenerated, never authored here, so it is not
 # ours to commit.
 #

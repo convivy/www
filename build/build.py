@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Static site builder for convivy.com.
 
-Renders `_site/` from `templates/` + `content/`, plus (optionally) the
-Field Notes corpus. Orient pushes the published corpus to this repo's orphan
-`fieldnotes-corpus` branch, and the workflow hands this script that branch's
-`corpus.json`. Content never lives on `main` — see README.md for the corpus
-contract this script builds against.
+Renders `_site/` from `templates/` + `content/`, plus a forwarding page at
+every old Field Notes address. Field Notes moved to convivybuilder.org as
+Swabby's Journal, so each `/fieldnotes/<slug>/` page now sends the reader to
+`https://convivybuilder.org/journal/<slug>/` and names it as canonical. The
+slugs come from the `fieldnotes-corpus` branch's `corpus.json`, which Orient no
+longer writes, so it holds exactly the posts convivy.com ever published. See
+README.md for the corpus contract this script still validates.
 
 Usage:
     python build/build.py
@@ -13,7 +15,7 @@ Usage:
 Environment:
     FIELDNOTES_CORPUS_FILE      Path to corpus.json, read from the
                                  fieldnotes-corpus branch. Unset -> build
-                                 with an empty-state Field Notes index. Set
+                                 only the /fieldnotes/ index forward. Set
                                  but the file is missing, unreadable, or
                                  malformed -> this script exits non-zero. A
                                  file with no posts also exits non-zero
@@ -27,7 +29,6 @@ from __future__ import annotations
 import datetime
 import json
 import os
-import re
 import shutil
 import sys
 from pathlib import Path
@@ -43,11 +44,9 @@ OUT_DIR = ROOT / "_site"
 
 MD = markdown.Markdown(extensions=["extra", "smarty"])
 
-# How many of the newest posts the Field Notes front page renders in full
-# (the river). Posts beyond the cap appear in the year-grouped "Older posts"
-# archive list below the river, linking to their permalink pages, so the
-# front page stays a readable length however large the corpus grows.
-RIVER_CAP = 5
+# Where Field Notes lives now. A post keeps its slug: /fieldnotes/<slug>/ on
+# convivy.com forwards to JOURNAL_URL + "<slug>/".
+JOURNAL_URL = "https://convivybuilder.org/journal/"
 
 
 class CorpusError(RuntimeError):
@@ -130,102 +129,6 @@ def validate_corpus(payload: object, *, source: str) -> list[dict]:
     return posts
 
 
-def display_date(iso_date: str) -> str:
-    """Render an ISO 8601 date/datetime string as a human-readable date."""
-    d = datetime.date.fromisoformat(iso_date[:10])
-    return d.strftime("%B %-d, %Y") if os.name != "nt" else d.strftime("%B %d, %Y")
-
-
-def short_date(iso_date: str) -> str:
-    """Render an ISO 8601 date/datetime as a month-and-day date ("Aug 4").
-
-    Used in the archive list, where rows sit under a year heading and
-    repeating the year on every row would be noise.
-    """
-    d = datetime.date.fromisoformat(iso_date[:10])
-    return d.strftime("%b %-d") if os.name != "nt" else d.strftime("%b %d")
-
-
-AUTHORSHIP_LABELS = {"human": "Human", "collab": "Collab", "llm": "LLM"}
-
-_HEADING_TAG_RE = re.compile(r"(</?h)([1-6])\b", flags=re.IGNORECASE)
-
-_ATX_HEADING_RE = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*(?:\n|$)")
-_SETEXT_UNDERLINE_RE = re.compile(r"^ {0,3}(?:=+|-+) *$")
-
-
-def _normalize_heading_text(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip().casefold()
-
-
-def strip_leading_title_heading(body: str, title: str) -> str:
-    """Strip the post body's leading heading if its text matches `title`.
-
-    Orient's corpus bodies commonly begin with the post title restated as a
-    heading (the templates already render the title from the `title` field,
-    so left alone this duplicates it). Strips that leading heading, in
-    either ATX (`# Title`) or setext (`Title` underlined with `===`/`---`)
-    form, comparing case-insensitively and whitespace-normalized, and
-    tolerating leading blank lines before the heading.
-
-    Leaves `body` byte-for-byte untouched if the leading heading's text
-    doesn't match `title`, or if the body has no leading heading at all —
-    this never strips content that isn't the duplicated title.
-    """
-    normalized_title = _normalize_heading_text(title)
-    if not normalized_title:
-        return body
-
-    leading_stripped = body.lstrip("\n\r\t ")
-
-    atx_match = _ATX_HEADING_RE.match(leading_stripped)
-    if atx_match:
-        if _normalize_heading_text(atx_match.group(2)) == normalized_title:
-            return leading_stripped[atx_match.end():].lstrip("\n")
-        return body
-
-    first_line, sep, remainder = leading_stripped.partition("\n")
-    if sep and first_line.strip():
-        second_line, sep2, rest = remainder.partition("\n")
-        if _SETEXT_UNDERLINE_RE.match(second_line):
-            if _normalize_heading_text(first_line) == normalized_title:
-                return rest.lstrip("\n") if sep2 else ""
-        return body
-
-    return body
-
-
-def shift_headings(html: str, by: int = 1) -> str:
-    """Demote every <h1>–<h6> in `html` by `by` levels, capping at <h6>.
-
-    The Field Notes front page renders full post bodies inline under the
-    page's single <h1> and each post's <h2> title, so body headings
-    (authored as h2/h3 in markdown for the permalink page, where the title
-    is the h1) must drop one level to keep the document outline valid.
-    """
-    return _HEADING_TAG_RE.sub(
-        lambda m: f"{m.group(1)}{min(int(m.group(2)) + by, 6)}", html
-    )
-
-
-def prepare_post(post: dict) -> dict:
-    authorship = post["authorship"]
-    body = strip_leading_title_heading(post["body"], post["title"])
-    body_html = render_markdown(body)
-    return {
-        **post,
-        "date_display": display_date(post["date"]),
-        "date_short": short_date(post["date"]),
-        "year": post["date"][:4],
-        "updated_display": display_date(post["updated"]) if post.get("updated") else None,
-        "authorship_label": AUTHORSHIP_LABELS.get(authorship, authorship),
-        "body_html": body_html,
-        # The same body, demoted one heading level, for inline rendering on
-        # the Field Notes front page (the river).
-        "body_html_river": shift_headings(body_html),
-    }
-
-
 def load_corpus() -> list[dict]:
     """Return the Field Notes post list, or [] for the empty state.
 
@@ -255,22 +158,7 @@ def load_corpus() -> list[dict]:
         )
         sys.exit(1)
     print(f"Field Notes corpus: {len(posts)} post(s) from the fieldnotes-corpus branch")
-    posts.sort(key=lambda p: p["date"], reverse=True)
-    return [prepare_post(p) for p in posts]
-
-
-def group_by_year(posts: list[dict]) -> list[tuple[str, list[dict]]]:
-    """Group already-sorted (newest-first) posts into (year, posts) runs.
-
-    Preserves the incoming order both across and within groups, so the
-    archive lists years newest-first and posts newest-first inside each.
-    """
-    groups: list[tuple[str, list[dict]]] = []
-    for post in posts:
-        if not groups or groups[-1][0] != post["year"]:
-            groups.append((post["year"], []))
-        groups[-1][1].append(post)
-    return groups
+    return posts
 
 
 def build() -> None:
@@ -315,32 +203,23 @@ def build() -> None:
         encoding="utf-8",
     )
 
-    # Field Notes.
+    # Field Notes moved to Swabby's Journal. GitHub Pages can't send a 301, so
+    # every old address gets a page that forwards to the same slug on the
+    # journal and names it canonical. The /fieldnotes/ index forwards to the
+    # journal's index.
     posts = load_corpus()
+    forward_tmpl = env.get_template("forward.html")
     fieldnotes_dir = OUT_DIR / "fieldnotes"
     fieldnotes_dir.mkdir(parents=True)
-
-    river_posts = posts[:RIVER_CAP]
-    older_posts = posts[RIVER_CAP:]
-    index_tmpl = env.get_template("fieldnotes_index.html")
     (fieldnotes_dir / "index.html").write_text(
-        index_tmpl.render(
-            root="/",
-            year=year,
-            posts=posts,
-            river_posts=river_posts,
-            older_by_year=group_by_year(older_posts),
-            older_count=len(older_posts),
-        ),
+        forward_tmpl.render(target=JOURNAL_URL, title=None),
         encoding="utf-8",
     )
-
-    post_tmpl = env.get_template("post.html")
     for post in posts:
         post_dir = fieldnotes_dir / post["slug"]
         post_dir.mkdir(parents=True, exist_ok=True)
         (post_dir / "index.html").write_text(
-            post_tmpl.render(root="/", year=year, post=post),
+            forward_tmpl.render(target=f"{JOURNAL_URL}{post['slug']}/", title=post["title"]),
             encoding="utf-8",
         )
 
@@ -351,8 +230,7 @@ def build() -> None:
     (OUT_DIR / "CNAME").write_text("convivy.com\n", encoding="utf-8")
     (OUT_DIR / ".nojekyll").write_text("", encoding="utf-8")
 
-    note = "empty state" if not posts else f"{len(posts)} post(s)"
-    print(f"Built _site/ — home page + fieldnotes ({note}).")
+    print(f"Built _site/ — home, people, and {len(posts)} Field Notes forward(s) plus the index.")
 
 
 if __name__ == "__main__":

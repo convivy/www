@@ -77,7 +77,9 @@ this shape:
   doesn't match `title` is left in place.
 - `count`, when present, must equal `len(posts)`. A mismatch fails the build — this is the guard
   against a corpus silently truncated somewhere upstream.
-- `slug` becomes the URL: `/fieldnotes/<slug>/`.
+- `slug` names the old address. Field Notes moved to Swabby's Journal, so the build writes a page at
+  `/fieldnotes/<slug>/` that forwards to `https://convivybuilder.org/journal/<slug>/` and names it
+  canonical, and `/fieldnotes/` forwards to the journal's index. Orient no longer writes the branch.
 
 This is the interface Orient's push builds against. Treat a change to this shape as a breaking
 change to both Orient and this build.
@@ -87,8 +89,8 @@ change to both Orient and this build.
 - **`FIELDNOTES_CORPUS_FILE` set** (the workflow sets it from the `fieldnotes-corpus` branch) — it
   is the build's only corpus source. A missing, unreadable or off-contract file exits non-zero,
   naming what was wrong.
-- **`FIELDNOTES_CORPUS_FILE` unset** — the build succeeds and renders an empty-state Field Notes
-  index ("Field Notes is moving in — posts will appear here."). This is what the preview job
+- **`FIELDNOTES_CORPUS_FILE` unset** — the build succeeds and writes only the `/fieldnotes/`
+  index forward. This is what the preview job
   builds, since it never sets `FIELDNOTES_CORPUS_FILE`.
 - **A branch corpus with zero posts** — the build exits non-zero unless the repo variable
   `FIELDNOTES_ALLOW_EMPTY` is `"1"`, set only to unpublish everything on purpose. A branch that
@@ -103,7 +105,7 @@ change to both Orient and this build.
 ```
 build/build.py            the entire builder — reads templates/ + content/ + the corpus, writes _site/
 content/home.md            the home page's markdown source (Jay's copy, edited via PR)
-templates/                 base.html, home.html, fieldnotes_index.html, post.html — Jinja2
+templates/                 base.html, home.html, people.html, links.html, forward.html — Jinja2
 static/style.css           all styling; no build step, no framework, no JS
 .github/workflows/build-deploy.yml   the Actions pipeline
 requirements.txt           markdown, jinja2 — pinned, nothing else

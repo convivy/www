@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title }} — Swabby's Journal</title>
+  <title>{% if title %}{{ title }} — {% endif %}Swabby's Journal</title>
   <link rel="canonical" href="{{ target }}">
   <meta http-equiv="refresh" content="0; url={{ target }}">
   <script>location.replace({{ target | tojson }} + location.hash);</script>
 </head>
 <body>
-  <p>Field Notes is now Swabby's Journal. <a href="{{ target }}">{{ title }}</a> is at {{ target }}.</p>
+  <p>Field Notes is now Swabby's Journal.{% if title %} <a href="{{ target }}">{{ title }}</a> is at {{ target }}.{% else %} It is at <a href="{{ target }}">{{ target }}</a>.{% endif %}</p>
 </body>
 </html>

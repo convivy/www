@@ -212,7 +212,7 @@ def build() -> None:
     fieldnotes_dir = OUT_DIR / "fieldnotes"
     fieldnotes_dir.mkdir(parents=True)
     (fieldnotes_dir / "index.html").write_text(
-        forward_tmpl.render(target=JOURNAL_URL, title="Swabby's Journal"),
+        forward_tmpl.render(target=JOURNAL_URL, title=None),
         encoding="utf-8",
     )
     for post in posts:

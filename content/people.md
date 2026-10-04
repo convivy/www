@@ -2,7 +2,7 @@
 
 ## Jay Porter
 
-I'm Convivy's founder. I lead product, and I design Convivy Builder, the agentic development platform we build our products with.
+I'm Convivy's founder. I build our products and our tools, including [Convivy Builder](https://convivybuilder.org), our agentic development platform.
 
 I started as a software engineer and technical communicator, and later held technical leadership roles at Salesforce and Meta. For about twelve years I owned and operated restaurants in San Diego and Oakland (The Linkery, El Take It Easy and The Half Orange), with teams of up to sixty people. I like helping people thrive at their jobs, and building tools that let that happen.
 

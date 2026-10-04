@@ -254,8 +254,9 @@ h2 a:hover {
   margin: 0 0 1.3rem;
 }
 
-/* The opening line reads as a standfirst. */
-.home > h1 + p,
+/* The opening line reads as a standfirst. On Home that is every paragraph
+   before the first section heading. */
+.home > h1 ~ p:not(h2 ~ p),
 .people > h1 + p {
   font-size: 1.45rem;
   line-height: 1.5;
@@ -445,7 +446,7 @@ th {
     font-size: 1.1rem;
   }
 
-  .home > h1 + p,
+  .home > h1 ~ p:not(h2 ~ p),
   .people > h1 + p {
     font-size: 1.3rem;
   }

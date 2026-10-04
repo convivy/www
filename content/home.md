@@ -6,7 +6,7 @@ Building each one of those things makes us better at building the other.
 
 ## [Convivy Builder](https://convivybuilder.org)
 
-The agentic development platform we build our products with. It writes all of our code.
+The agentic development platform we build our products with.
 
 ## [Vivy](https://vivy.rentals)
 

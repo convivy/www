@@ -4,8 +4,8 @@ Convivy is a software lab dedicated to agentic engineering. We are building an a
 
 ## [Convivy Builder](https://convivybuilder.org)
 
-[COPY PENDING: one short line on Convivy Builder.]
+The agentic development platform we build our products with. It writes all of our code.
 
 ## [Vivy](https://vivy.rentals)
 
-[COPY PENDING: one short line on what Vivy is for. Vivy is pre-launch, so the line makes no availability or customer claims.]
+For short-term rental hosts: know your turnovers are happening as planned.

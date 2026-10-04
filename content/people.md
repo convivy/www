@@ -2,6 +2,10 @@
 
 ## Jay Porter
 
-[COPY PENDING: Jay's bio, in his plain first person.]
+I'm Convivy's founder. I lead product, and I design Convivy Builder, the agentic development platform that writes all of our code.
 
-[COPY PENDING: one line pointing to Swabby's Journal.] [Swabby's Journal](https://convivybuilder.org/journal/)
+I started as a software engineer and technical communicator, and later held technical leadership roles at Salesforce and Meta. For about twelve years I owned and operated restaurants in San Diego and Oakland (The Linkery, El Take It Easy and The Half Orange), with teams of up to sixty people. I like helping people thrive at their jobs, and building tools that let that happen.
+
+I also run short-term rental properties, which is where Vivy came from.
+
+I write about what I learn building this way in [Swabby's Journal](https://convivybuilder.org/journal/).

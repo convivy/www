@@ -1,13 +1,11 @@
 # People
 
-Convivy is an agentic software engineering lab founded by Jay Porter and Katie Mayfield.
-
 ## Jay Porter
 
-I came up as a software engineer and technical communicator, and later moved into technical management at Salesforce and Meta. I also owned and operated restaurants for about twelve years, leading teams of up to sixty people. I like helping people thrive at their jobs, and building tools that let that happen.
+I'm Convivy's founder. I lead product, and I design Convivy Builder, the agentic development platform that writes all of our code.
 
-At Convivy we make useful things, including agentic engineering tools for making useful things. I lead the product creation and the design of the agentic development system that writes all of our code. Field Notes is where I write about what I learn while doing that.
+I started as a software engineer and technical communicator, and later held technical leadership roles at Salesforce and Meta. For about twelve years I owned and operated restaurants in San Diego and Oakland (The Linkery, El Take It Easy and The Half Orange), with teams of up to sixty people. I like helping people thrive at their jobs, and building tools that let that happen.
 
-## Katie Mayfield
+I also run short-term rental properties, which is where Vivy came from.
 
-Katie is co-founder of Convivy. She has spent twenty years building people systems and management cultures across food, hospitality, and CPG — VP People at Fellow, VP People & Change at La Tourangelle, COO of 4505 Meats — and in 2023 founded Katie Mayfield People & Culture, where she provides fractional Chief People Officer services and builds leadership systems for operators. She holds an SPHR.
+I write about what I learn building this way in [Swabby's Journal](https://convivybuilder.org/journal/).

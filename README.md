@@ -105,7 +105,8 @@ change to both Orient and this build.
 ```
 build/build.py            the entire builder — reads templates/ + content/ + the corpus, writes _site/
 content/home.md            the home page's markdown source (Jay's copy, edited via PR)
-templates/                 base.html, home.html, people.html, links.html, forward.html — Jinja2
+content/people.md          the People page's markdown source (Jay's copy, edited via PR)
+templates/                 base.html, home.html, people.html, forward.html — Jinja2
 static/style.css           all styling; no build step, no framework, no JS
 .github/workflows/build-deploy.yml   the Actions pipeline
 requirements.txt           markdown, jinja2 — pinned, nothing else

@@ -192,17 +192,6 @@ def build() -> None:
         encoding="utf-8",
     )
 
-    # Links.
-    links_md = (CONTENT_DIR / "links.md").read_text(encoding="utf-8")
-    links_html = render_markdown(links_md)
-    links_tmpl = env.get_template("links.html")
-    links_dir = OUT_DIR / "links"
-    links_dir.mkdir(parents=True)
-    (links_dir / "index.html").write_text(
-        links_tmpl.render(root="/", year=year, body_html=links_html),
-        encoding="utf-8",
-    )
-
     # Field Notes moved to Swabby's Journal. GitHub Pages can't send a 301, so
     # every old address gets a page that forwards to the same slug on the
     # journal and names it canonical. The /fieldnotes/ index forwards to the
